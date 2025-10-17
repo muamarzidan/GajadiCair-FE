@@ -12,17 +12,15 @@ const LoginPage = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement login logic
     console.log("Login attempt:", { email, password });
-    // Untuk sementara, redirect ke dashboard
     navigate("/dashboard");
   };
 
   return (
     <div className="w-full max-w-md mx-auto">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gradient mb-2">Gajadicair</h1>
-        <p className="text-muted-foreground">Masuk ke dashboard Anda</p>
+        <h1 className="text-3xl font-bold text-gradient mb-2">GajadiCair</h1>
+        <p className="text-muted-foreground">Login to your account</p>
       </div>
 
       <Card className="p-6">

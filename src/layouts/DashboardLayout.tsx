@@ -1,5 +1,4 @@
 import { Outlet } from "react-router-dom";
-// Import dashboard navbar/sidebar components di sini nanti
 // import { DashboardNavbar } from "@/components/bo/DashboardNavbar";
 // import { Sidebar } from "@/components/bo/Sidebar";
 
