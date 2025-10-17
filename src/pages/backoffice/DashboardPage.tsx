@@ -6,7 +6,6 @@ const DashboardPage = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // TODO: Implement logout logic
     navigate("/login");
   };
 

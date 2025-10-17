@@ -7,25 +7,24 @@ export const Footer = () => {
         <div className="grid md:grid-cols-2 gap-8 mb-8">
           {/* Company Info */}
           <div>
-            <h3 className="text-2xl font-bold mb-4">Gajadicair</h3>
+            <h3 className="text-2xl font-bold mb-4">GajadiCair</h3>
             <p className="text-background/80 mb-4">
-              Solusi SaaS manajemen SDM dan penggajian yang mengotomatisasi proses HRD Anda.
+              A SaaS solution for HR management and payroll that automates your HR processes.
             </p>
           </div>
           <div className="grid sm:grid-cols-2">
             {/* Company */}
             <div>
-              <h4 className="font-bold mb-4">Perusahaan</h4>
+              <h4 className="font-bold mb-4">Company</h4>
               <ul className="space-y-2 text-background/80">
-                <li><a href="#features" className="hover:text-background transition-colors">Fitur</a></li>
-                <li><a href="#pricing" className="hover:text-background transition-colors">Harga</a></li>
-                <li><a href="#" className="hover:text-background transition-colors">Tentang Kami</a></li>
-                <li><a href="#" className="hover:text-background transition-colors">Kontak</a></li>
+                <li><a href="#features" className="hover:text-background transition-colors">Features</a></li>
+                <li><a href="#pricing" className="hover:text-background transition-colors">Pricing</a></li>
+                <li><a href="#contact" className="hover:text-background transition-colors">Contact</a></li>
               </ul>
             </div>
             {/* Contact */}
             <div>
-              <h4 className="font-bold mb-4">Kontak</h4>
+              <h4 className="font-bold mb-4">Contact</h4>
               <ul className="space-y-3 text-background/80">
                 <li className="flex items-start gap-2">
                   <Mail className="h-5 w-5 flex-shrink-0 mt-0.5" />
