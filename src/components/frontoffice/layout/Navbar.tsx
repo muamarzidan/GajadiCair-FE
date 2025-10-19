@@ -5,40 +5,36 @@ import { Link } from "react-router-dom";
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border shadow-soft">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <h1 className="text-2xl font-bold text-gradient">Gajadicair</h1>
+            <Link to="/">
+              <h1 className="text-2xl font-bold">GajadiCair</h1>
+            </Link>
           </div>
-          
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-foreground hover:text-primary transition-colors font-medium">
-              Fitur
+              Feature
             </a>
             <a href="#pricing" className="text-foreground hover:text-primary transition-colors font-medium">
-              Harga
+              Pricing
             </a>
-            <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">
-              Tentang
-            </a>
-            <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">
-              Kontak
+            <a href="#contact" className="text-foreground hover:text-primary transition-colors font-medium">
+              Contact
             </a>
           </div>
-          
-          {/* Desktop CTA */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="flex gap-4">
             <Link to="/login">
-              <Button variant="ghost">Masuk</Button>
+              <Button variant="default">Login</Button>
             </Link>
-            <Button variant="default">Coba Gratis</Button>
+            <Link to="/register">
+              <Button variant="outline">Register</Button>
+            </Link>
           </div>
-          
           {/* Mobile menu button */}
           <button
             className="md:hidden p-2"
@@ -48,7 +44,6 @@ export const Navbar = () => {
             {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
-        
         {/* Mobile Navigation */}
         {isOpen && (
           <div className="md:hidden py-4 border-t border-border animate-fade-in">
