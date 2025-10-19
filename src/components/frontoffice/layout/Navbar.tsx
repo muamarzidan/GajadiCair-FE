@@ -27,9 +27,14 @@ export const Navbar = () => {
               Contact
             </a>
           </div>
-          <Link to="/login">
-            <Button variant="default">Create Account</Button>
-          </Link>
+          <div className="flex gap-4">
+            <Link to="/login">
+              <Button variant="default">Login</Button>
+            </Link>
+            <Link to="/register">
+              <Button variant="outline">Register</Button>
+            </Link>
+          </div>
           {/* Mobile menu button */}
           <button
             className="md:hidden p-2"

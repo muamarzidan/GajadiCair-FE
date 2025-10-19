@@ -24,7 +24,7 @@ export const Hero = () => {
               Gajadicair is an integrated solution for biometric attendance, employee management, and automated payroll. Save up to 80% on HR administration time.
             </p>
             <div className="flex flex-col sm:flex-row">
-              <Button variant="default" size="xl" className="group">
+              <Button variant="default" size="lg" className="group">
                 Try for Free Now
                 <ArrowRight className="ml-1 h-5 w-5 group-hover:translate-x-1 transition-transform -rotate-45" />
               </Button>

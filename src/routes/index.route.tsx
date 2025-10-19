@@ -1,10 +1,11 @@
 import { createBrowserRouter } from "react-router-dom";
+
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import PublicLayout from "@/layouts/PublicLayout";
 import AuthLayout from "@/layouts/AuthLayout";
-import DashboardLayout from "@/layouts/DashboardLayout";
-import HomePage from "@/pages/index";
-import LoginPage from "@/pages/auth/LoginPage";
-import RegisterPage from "@/pages/auth/RegisterPage";
+import HomePage from "@/pages/frontoffice/Landing";
+import LoginPage from "@/pages/frontoffice/LoginPage";
+import RegisterPage from "@/pages/frontoffice/RegisterPage";
 import DashboardPage from "@/pages/backoffice/DashboardPage";
 
 export const router = createBrowserRouter([
@@ -26,18 +27,13 @@ export const router = createBrowserRouter([
         path: "login",
         element: <LoginPage />,
       },
-    ],
-  },
-  {
-    path: "register",
-    element: <AuthLayout />,
-    children: [
       {
-        index: true,
+        path: "register",
         element: <RegisterPage />,
       },
     ],
   },
+  // Shortcut routes
   {
     path: "/login",
     element: <AuthLayout />,
@@ -49,21 +45,31 @@ export const router = createBrowserRouter([
     ],
   },
   {
-    path: "/dashboard",
-    element: <DashboardLayout />,
+    path: "/register",
+    element: <AuthLayout />,
     children: [
       {
         index: true,
-        element: <DashboardPage />,
+        element: <RegisterPage />,
       },
-      // {
-      //   path: "employees",
-      //   element: <EmployeesPage />,
-      // },
-      // {
-      //   path: "payroll",
-      //   element: <PayrollPage />,
-      // },
     ],
   },
+  // Protected Dashboard Routes
+  {
+    path: "/dashboard",
+    element: (
+      <ProtectedRoute>
+        <DashboardPage />
+      </ProtectedRoute>
+    ),
+  },
+  // Add more dashboard routes with sidebar structure here when needed
+  // {
+  //   path: "/dashboard/employees",
+  //   element: (
+  //     <ProtectedRoute>
+  //       <EmployeesPage />
+  //     </ProtectedRoute>
+  //   ),
+  // },
 ]);

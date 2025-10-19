@@ -1,3 +1,3 @@
-export { default as HomePage } from "./index";
-export { default as LoginPage } from "./auth/LoginPage";
+export { default as HomePage } from "./frontoffice/Landing";
+export { default as LoginPage } from "./frontoffice/LoginPage";
 export { default as DashboardPage } from "./backoffice/DashboardPage";
