@@ -85,14 +85,14 @@ export const Pricing = () => {
           {pricingTiers.map((tier, index) => (
             <Card 
               key={index}
-              className={`relative gradient-card border-0 shadow-medium hover:shadow-large transition-all duration-300 hover:-translate-y-2 animate-scale-in ${
+              className={`relative bg-gray-50 border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 animate-scale-in ${
                 tier.popular ? "ring-2 ring-primary lg:scale-105" : ""
               }`}
               style={{ animationDelay: `${index * 100}ms` }}
             >
               {tier.popular && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <span className="gradient-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-bold shadow-medium">
+                  <span className="bg-gray-800 text-primary-foreground px-4 py-1 rounded-full text-sm font-bold shadow-medium">
                     Paling Populer
                   </span>
                 </div>
@@ -126,7 +126,7 @@ export const Pricing = () => {
               
               <CardFooter>
                 <Button 
-                  variant={tier.popular ? "hero" : "default"} 
+                  variant={tier.popular ? "default" : "default"} 
                   size="lg" 
                   className="w-full"
                 >
