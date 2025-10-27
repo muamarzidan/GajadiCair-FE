@@ -23,7 +23,7 @@ const pricingTiers = [
     popular: false,
   },
   {
-    name: "PRO",
+    name: "BASIC",
     price: "Rp 299.000",
     period: "/bulan",
     description: "Untuk perusahaan berkembang",
@@ -40,11 +40,11 @@ const pricingTiers = [
       { text: "Slip Gaji Digital (6 Bulan)", included: true },
       { text: "Laporan Absensi Dasar", included: true },
     ],
-    cta: "Pilih PRO",
+    cta: "Pilih BASIC",
     popular: true,
   },
   {
-    name: "ULTRA",
+    name: "PRO",
     price: "Rp 799.000",
     period: "/bulan",
     description: "Untuk enterprise dan skala besar",
@@ -63,7 +63,7 @@ const pricingTiers = [
       { text: "Integrasi API", included: true },
       { text: "Dukungan Prioritas 24/7", included: true },
     ],
-    cta: "Pilih ULTRA",
+    cta: "Pilih PRO",
     popular: false,
   },
 ];
