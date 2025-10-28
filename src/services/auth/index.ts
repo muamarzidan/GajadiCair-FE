@@ -4,22 +4,22 @@ import type { User, LoginRequest, RegisterRequest, GoogleLoginRequest } from '@/
 
 export const authApi = {
   login: async (data: LoginRequest): Promise<ApiResponse<User>> => {
-    const response = await apiClient.post('/api/v1/auth/login', data);
+    const response = await apiClient.post('/api/v1/auth/company/login', data);
     return response.data;
   },
   
   register: async (data: RegisterRequest): Promise<ApiResponse<User>> => {
-    const response = await apiClient.post('/api/v1/auth/register', data);
+    const response = await apiClient.post('/api/v1/auth/company/register', data);
     return response.data;
   },
   
   loginWithGoogle: async (data: GoogleLoginRequest): Promise<ApiResponse<User>> => {
-    const response = await apiClient.post('/api/v1/auth/login/google', data);
+    const response = await apiClient.post('/api/v1/auth/login/company/google', data);
     return response.data;
   },
   
   logout: async (): Promise<ApiResponse> => {
-    const response = await apiClient.post('/api/v1/auth/logout');
+    const response = await apiClient.post('/api/v1/auth/company/logout');
     return response.data;
   }
 };
