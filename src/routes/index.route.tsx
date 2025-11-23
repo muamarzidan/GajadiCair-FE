@@ -1,12 +1,13 @@
 import { createBrowserRouter } from "react-router-dom";
 
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { ProtectedRoute } from "@/components/protected-route";
 import PublicLayout from "@/layouts/PublicLayout";
 import AuthLayout from "@/layouts/AuthLayout";
 import HomePage from "@/pages/frontoffice/Landing";
 import LoginPage from "@/pages/frontoffice/LoginPage";
 import RegisterPage from "@/pages/frontoffice/RegisterPage";
 import DashboardPage from "@/pages/backoffice/DashboardPage";
+import EmployeePage from "@/pages/backoffice/EmployeePage";
 
 export const router = createBrowserRouter([
   {
@@ -63,13 +64,12 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
-  // Add more dashboard routes with sidebar structure here when needed
-  // {
-  //   path: "/dashboard/employees",
-  //   element: (
-  //     <ProtectedRoute>
-  //       <EmployeesPage />
-  //     </ProtectedRoute>
-  //   ),
-  // },
+  {
+    path: "/employee",
+    element: (
+      <ProtectedRoute requiredRole="company">
+        <EmployeePage />
+      </ProtectedRoute>
+    ),
+  },
 ]);

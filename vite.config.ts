@@ -13,6 +13,13 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3000, 
+    port: 3000,
+    proxy: {
+      '/api': {
+        target: 'https://api.gajadicair.kanzen.my.id',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
   }
 })
