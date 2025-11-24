@@ -111,13 +111,13 @@ const EmployeePage = () => {
         </header>
         <div className="flex flex-1 flex-col gap-6 p-6">
           {/* Header */}
-          <div className="flex items-center flex-col gap-1">
+          <div className="flex items-center flex-col gap-1 justify-start">
             <h1 className="text-3xl font-bold tracking-tight">Employees</h1>
             <p className="text-muted-foreground">
               Manage your company employees and their information
             </p>
           </div>
-          {/* Search Bar */}
+          {/* Search & Create */}
           <div className="flex items-center justify-between gap-4">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
