@@ -1,4 +1,5 @@
-import { AppSidebar } from "@/components/app-sidebar"
+import { useAuth } from "@/contexts/AuthContext";
+import { AppSidebar } from "@/components/app-sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -14,11 +15,10 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Card } from "@/components/ui/card"
-import { useAuth } from "@/contexts/AuthContext"
+
 
 export default function DashboardPage() {
   const { user } = useAuth();
-
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -27,10 +27,9 @@ export default function DashboardPage() {
       </SidebarInset>
     </SidebarProvider>
   );
-}
+};
 
 function DashboardContent({ user }: { user: any }) {
-
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
@@ -128,4 +127,4 @@ function DashboardContent({ user }: { user: any }) {
       </div>
     </>
   );
-}
+};

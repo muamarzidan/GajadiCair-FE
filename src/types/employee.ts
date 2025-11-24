@@ -16,7 +16,6 @@ export interface Employee {
   updated_at: string;
   deleted_at: string | null;
 }
-
 export interface CreateEmployeeRequest {
   name: string;
   email: string;
@@ -27,7 +26,6 @@ export interface CreateEmployeeRequest {
   tax_identification_number?: string;
   send_to_email?: boolean;
 }
-
 export interface UpdateEmployeeRequest {
   name?: string;
   email?: string;

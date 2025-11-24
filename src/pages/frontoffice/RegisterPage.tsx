@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
+
 const RegisterPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -34,21 +35,18 @@ const RegisterPage = () => {
       [e.target.name]: e.target.value,
     });
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    // Validasi password
     if (formData.password !== formData.confirmPassword) {
       setError("Password dan konfirmasi password tidak cocok");
       return;
-    }
-
+    };
     if (formData.password.length < 8) {
       setError("Password harus minimal 8 karakter");
       return;
-    }
+    };
 
     setIsLoading(true);
 
@@ -63,7 +61,7 @@ const RegisterPage = () => {
       setError(error.message);
     } finally {
       setIsLoading(false);
-    }
+    };
   };
 
   return (
@@ -81,7 +79,6 @@ const RegisterPage = () => {
             <span className="text-sm">{error}</span>
           </div>
         )}
-
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="name" className="block text-sm font-medium mb-2">
