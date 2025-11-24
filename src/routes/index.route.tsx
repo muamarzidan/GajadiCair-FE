@@ -7,7 +7,7 @@ import HomePage from "@/pages/frontoffice/Landing";
 import LoginPage from "@/pages/frontoffice/LoginPage";
 import RegisterPage from "@/pages/frontoffice/RegisterPage";
 import DashboardPage from "@/pages/backoffice/DashboardPage";
-import EmployeePage from "@/pages/backoffice/EmployeePage";
+import EmployeePage from "@/pages/backoffice/employees/EmployeePage";
 
 export const router = createBrowserRouter([
   {

@@ -31,7 +31,7 @@ const LoginPage = () => {
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
       navigate(from, { replace: true });
-    }
+    };
   }, [authLoading, isAuthenticated, navigate, from]);
   
   const handleCompanyLogin = async (e: React.FormEvent) => {
