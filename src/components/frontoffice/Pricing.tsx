@@ -19,7 +19,7 @@ const pricingTiers = [
       { text: "Notifikasi Email", included: false },
       { text: "Slip Gaji Digital", included: false },
     ],
-    cta: "Mulai Gratis",
+    cta: "Start Now",
     popular: false,
   },
   {
@@ -40,7 +40,7 @@ const pricingTiers = [
       { text: "Slip Gaji Digital (6 Bulan)", included: true },
       { text: "Laporan Absensi Dasar", included: true },
     ],
-    cta: "Pilih BASIC",
+    cta: "Choose BASIC",
     popular: true,
   },
   {
@@ -63,7 +63,7 @@ const pricingTiers = [
       { text: "Integrasi API", included: true },
       { text: "Dukungan Prioritas 24/7", included: true },
     ],
-    cta: "Pilih PRO",
+    cta: "Choose PRO",
     popular: false,
   },
 ];
@@ -92,8 +92,8 @@ export const Pricing = () => {
             >
               {tier.popular && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <span className="bg-gray-800 text-primary-foreground px-4 py-1 rounded-full text-sm font-bold shadow-medium">
-                    Paling Populer
+                  <span className="bg-gray-800 text-primary-foreground px-4 py-1 rounded-full text-xl font-bold shadow-medium">
+                    Most Populer
                   </span>
                 </div>
               )}
@@ -128,7 +128,7 @@ export const Pricing = () => {
                 <Button 
                   variant={tier.popular ? "default" : "default"} 
                   size="lg" 
-                  className="w-full"
+                  className="w-full !py-6"
                 >
                   {tier.cta}
                 </Button>

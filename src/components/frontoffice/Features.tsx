@@ -53,12 +53,12 @@ export const Features = () => {
             return (
               <Card 
                 key={index}
-                className="gradient-card border-0 shadow-soft hover:shadow-medium transition-all duration-300 hover:-translate-y-1 animate-scale-in"
+                className="border-dashed border-2 transition-all duration-300 hover:-translate-y-2 animate-scale-in hover:border-blue-900/30"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <CardContent className="p-6">
-                  <div className="inline-flex p-3 rounded-lg bg-blue-500/10 mb-4">
-                    <Icon className="h-6 w-6 text-blue-500" />
+                  <div className="inline-flex p-3 rounded-lg bg-blue-900/10 mb-4">
+                    <Icon className="h-6 w-6 text-blue-950" />
                   </div>
                   <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
                   <p className="text-muted-foreground leading-relaxed">

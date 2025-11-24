@@ -1,29 +1,35 @@
-import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Menu, X } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border shadow-soft">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-transparent">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center">
+          <div className="flex items-center max-w-32 h-full">
             <Link to="/">
-              <h1 className="text-2xl font-bold">GajadiCair</h1>
+              <img
+                src="/icons/logo-gajadicair-white.svg"
+                alt="Logo"
+                className="object-contain h-10"
+              />
             </Link>
           </div>
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-foreground hover:text-primary transition-colors font-medium">
+          <div className="hidden md:flex items-center gap-8 text-gray-50">
+            <a href="#features" className="hover:text-gray-500 transition-colors duration-300">
               Feature
             </a>
-            <a href="#pricing" className="text-foreground hover:text-primary transition-colors font-medium">
+            <a href="#pricing" className="hover:text-gray-500 transition-colors duration-300">
               Pricing
             </a>
-            <a href="#contact" className="text-foreground hover:text-primary transition-colors font-medium">
+            <a href="#contact" className="hover:text-gray-500 transition-colors duration-300">
               Contact
             </a>
           </div>
