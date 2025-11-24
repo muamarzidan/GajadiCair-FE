@@ -53,7 +53,7 @@ export const Benefits = () => {
                             >
                                 <CardContent className="p-6">
                                     <div className="inline-flex p-4 rounded-full bg-secondary/10 mb-4">
-                                        <Icon className="h-8 w-8 text-blue-500" />
+                                        <Icon className="h-8 w-8 text-blue-950" />
                                     </div>
                                     <div className="text-4xl font-bold text-gradient mb-2">{benefit.stat}</div>
                                     <h3 className="text-lg font-bold mb-2">{benefit.label}</h3>

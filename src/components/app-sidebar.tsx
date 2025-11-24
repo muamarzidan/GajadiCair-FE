@@ -1,4 +1,5 @@
 import * as React from "react";
+
 import { useAuth } from "@/contexts/AuthContext";
 import {
   SquareTerminal,
@@ -21,12 +22,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   
   const companyInfo = {
     name: user?.name || "Company",
-    plan: "free",
+    plan: user?.plan_expiration || "free",
   };
   const userData = {
     name: user?.name || "User",
     email: user?.email || "user@gajadicair.com", 
     avatar: user?.avatar_uri || "/avatars/shadcn.jpg",
+    level_plan: user && 'level_plan' in user ? user.level_plan : 0,
   };
   
   // Role-based navigation items

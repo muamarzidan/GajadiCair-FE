@@ -7,7 +7,7 @@ import type {
   CompanyLoginRequest, 
   EmployeeLoginRequest,
   RegisterRequest, 
-  GoogleLoginRequest 
+  GoogleLoginRequest
 } from '@/services/auth';
 
 
@@ -124,7 +124,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       throw new Error(error.response?.data?.message || error.message || 'Registration failed');
     } finally {
       setIsLoading(false);
-    }
+    };
   };
   const loginWithGoogle = async (data: GoogleLoginRequest) => {
     try {
@@ -140,7 +140,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       throw new Error(error.response?.data?.message || 'Google login failed');
     } finally {
       setIsLoading(false);
-    }
+    };
   };
   const logout = async () => {
     try {
@@ -156,9 +156,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       localStorage.removeItem('company_credentials-gjdc');
       localStorage.removeItem('employee_credentials-gjdc');
       setUser(null);
-      // Redirect to landing page after logout
       window.location.href = '/';
-    }
+    };
   };
 
   const value: AuthContextType = {

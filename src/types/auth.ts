@@ -3,12 +3,12 @@ export interface BaseUser {
   email: string;
   name: string;
   avatar_uri: string | null;
+  plan_expiration?: string | null;
   last_login: string;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
 }
-
 // Company user
 export interface CompanyUser extends BaseUser {
   company_id: string;
@@ -23,18 +23,15 @@ export interface CompanyUser extends BaseUser {
   payroll_day_of_month: number | null;
   role: 'company';
 }
-
 // Login response with access_token
 export interface CompanyLoginResponse {
   company: Omit<CompanyUser, 'role'>;
   access_token: string;
 }
-
 export interface EmployeeLoginResponse {
   employee: Omit<EmployeeUser, 'role'>;
   access_token: string;
 }
-
 // Employee user
 export interface EmployeeUser extends BaseUser {
   employee_id: string;
@@ -47,28 +44,23 @@ export interface EmployeeUser extends BaseUser {
   tax_identification_number: string | null;
   role: 'employee';
 }
-
 // Union type for all users
 export type User = CompanyUser | EmployeeUser;
-
 // Login requests
 export interface CompanyLoginRequest {
   email: string;
   password: string;
 }
-
 export interface EmployeeLoginRequest {
   company_id: string;
   employee_id: string;
   password: string;
 }
-
 export interface RegisterRequest {
   name: string;
   email: string;
   password: string;
 }
-
 export interface GoogleLoginRequest {
   id_token: string;
 }
