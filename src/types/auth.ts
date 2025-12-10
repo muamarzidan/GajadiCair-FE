@@ -1,9 +1,10 @@
-// Uuser interface
 export interface BaseUser {
   email: string;
   name: string;
   avatar_uri: string | null;
   plan_expiration?: string | null;
+  level_plan?: number;
+  role: 'company' | 'employee';
   last_login: string;
   created_at: string;
   updated_at: string;

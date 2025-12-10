@@ -16,8 +16,8 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   userRole: 'company' | 'employee' | null;
-  loginAsCompany: (data: CompanyLoginRequest) => Promise<void>;
-  loginAsEmployee: (data: EmployeeLoginRequest) => Promise<void>;
+  loginAsCompany: (data: CompanyLoginRequest) => Promise<User>;
+  loginAsEmployee: (data: EmployeeLoginRequest) => Promise<User>;
   register: (data: RegisterRequest) => Promise<void>;
   loginWithGoogle: (data: GoogleLoginRequest) => Promise<void>;
   logout: () => Promise<void>;
@@ -78,29 +78,31 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     checkAuth();
   }, []);
 
-  const loginAsCompany = async (data: CompanyLoginRequest) => {
+  const loginAsCompany = async (data: CompanyLoginRequest): Promise<User> => {
     try {
       setIsLoading(true);
       const response = await authApi.loginAsCompany(data);
       
       if (response.statusCode === 200 && response.data) {
         setUser(response.data);
+        return response.data;
       } else {
         throw new Error(response.message || 'Login failed');
-      };
+      }
     } catch (error: any) {
       throw new Error(error.response?.data?.message || error.message || 'Company login failed');
     } finally {
       setIsLoading(false);
-    };
+    }
   };
-  const loginAsEmployee = async (data: EmployeeLoginRequest) => {
+  const loginAsEmployee = async (data: EmployeeLoginRequest): Promise<User> => {
     try {
       setIsLoading(true);
       const response = await authApi.loginAsEmployee(data);
       
       if (response.statusCode === 200 && response.data) {
         setUser(response.data);
+        return response.data;
       } else {
         throw new Error(response.message || 'Login failed');
       }
