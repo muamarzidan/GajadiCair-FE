@@ -1,4 +1,5 @@
 import { Check, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,6 +52,12 @@ const pricingTiers = [
 ];
 
 export const Pricing = () => {
+  const navigate = useNavigate();
+
+  const handleSelectPlan = () => {
+    navigate('/login');
+  };
+
   return (
     <section id="pricing" className="py-24">
       <div className="container mx-auto px-4">
@@ -111,6 +118,7 @@ export const Pricing = () => {
                   variant={tier.popular ? "default" : "default"} 
                   size="lg" 
                   className="w-full !py-6"
+                  onClick={handleSelectPlan}
                 >
                   {tier.cta}
                 </Button>

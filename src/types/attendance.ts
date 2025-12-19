@@ -1,0 +1,57 @@
+export interface AttendanceRecord {
+  attendance_id: string;
+  employee_id: string;
+  check_in_time: string;
+  check_out_time: string | null;
+  check_in_latitude: number;
+  check_in_longitude: number;
+  check_out_latitude: number | null;
+  check_out_longitude: number | null;
+  work_duration_minutes: number | null;
+  status: 'present' | 'late' | 'absent' | 'half-day';
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+export interface TodayAttendanceStatus {
+  has_checked_in: boolean;
+  has_checked_out: boolean;
+  check_in_time: string | null;
+  check_out_time: string | null;
+  attendance_id: string | null;
+  work_duration_minutes: number | null;
+}
+
+export interface CheckInRequest {
+  file: File;
+  latitude: number;
+  longitude: number;
+}
+
+export interface CheckInResponse {
+  attendance_id: string;
+  check_in_time: string;
+  message: string;
+}
+
+export interface CheckOutRequest {
+  file: File;
+  latitude: number;
+  longitude: number;
+}
+
+export interface CheckOutResponse {
+  attendance_id: string;
+  check_in_time: string;
+  check_out_time: string;
+  work_duration_minutes: number;
+  message: string;
+}
+
+export interface GeolocationCoordinates {
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+}

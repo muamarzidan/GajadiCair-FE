@@ -9,6 +9,7 @@ import RegisterPage from "@/pages/frontoffice/RegisterPage";
 import DashboardPage from "@/pages/backoffice/DashboardPage";
 import EmployeePage from "@/pages/backoffice/employees/EmployeePage";
 import UpgradePage from "@/pages/backoffice/UpgradePage";
+import AttendancePage from "@/pages/backoffice/AttendancePage";
 import FaceRegistrationPage from "@/pages/backoffice/FaceRegistrationPage";
 
 
@@ -80,6 +81,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute requiredRole="company">
         <UpgradePage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/attendance",
+    element: (
+      <ProtectedRoute requiredRole="employee">
+        <AttendancePage />
       </ProtectedRoute>
     ),
   },

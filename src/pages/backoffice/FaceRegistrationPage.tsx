@@ -8,6 +8,8 @@ import { Card } from '@/components/ui/card';
 
 
 const MAX_ATTEMPTS = 3;
+const CAPTURE_COUNT = 20;
+const CAPTURE_DURATION = 3000; // 3 seconds
 
 const FaceRegistrationPage = () => {
   const navigate = useNavigate();
@@ -15,7 +17,10 @@ const FaceRegistrationPage = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [cameraStarted, setCameraStarted] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [countdown, setCountdown] = useState(3);
+  const [capturedImages, setCapturedImages] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [error, setError] = useState('');
@@ -26,104 +31,205 @@ const FaceRegistrationPage = () => {
   useEffect(() => {
     if (!location.state?.fromLogin) {
       navigate('/', { replace: true });
-    }
-  }, [location, navigate]);
-  // Initialize camera
-  useEffect(() => {
-    const initCamera = async () => {
-      try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            facingMode: 'user'
-          }
-        });
-        
-        setStream(mediaStream);
-        
-        if (videoRef.current) {
-          videoRef.current.srcObject = mediaStream;
-        }
-      } catch (err) {
-        setError('Tidak dapat mengakses kamera. Pastikan izin kamera sudah diberikan.');
-      }
     };
+  }, [location, navigate]);
 
-    initCamera();
-
-    // Cleanup
+  // Cleanup camera on unmount
+  useEffect(() => {
     return () => {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
     };
-  }, []);
+  }, [stream]);
 
-  const capturePhoto = () => {
-    if (!videoRef.current || !canvasRef.current) return;
+  // Start camera manually
+  const startCamera = async () => {
+    try {
+      setError('');
+      console.log('Requesting camera access...');
+      
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: 'user'
+        }
+      });
+      
+      console.log('Camera access granted');
+      setStream(mediaStream);
+      setCameraStarted(true);
+      
+      // Wait for next render cycle so video element is mounted
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      if (!videoRef.current) {
+        throw new Error('Video element not found after render');
+      }
+      
+      const video = videoRef.current;
+      video.srcObject = mediaStream;
+      
+      // Play video
+      await video.play();
+      console.log('Video started playing');
+      
+      // Wait for video dimensions using requestAnimationFrame
+      const waitForVideo = (): Promise<void> => {
+        return new Promise((resolve, reject) => {
+          const startTime = Date.now();
+          const timeout = 10000; // 10 seconds max
+          
+          const checkDimensions = () => {
+            if (video.videoWidth > 0 && video.videoHeight > 0) {
+              console.log('✅ Video ready:', video.videoWidth, 'x', video.videoHeight);
+              resolve();
+              return;
+            }
+            
+            if (Date.now() - startTime > timeout) {
+              reject(new Error('Timeout waiting for video dimensions'));
+              return;
+            }
+            
+            console.log('⏳ Waiting for video dimensions...');
+            requestAnimationFrame(checkDimensions);
+          };
+          
+          checkDimensions();
+        });
+      };
+      
+      await waitForVideo();
+      
+      // Additional small delay for stability
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      console.log('🚀 Starting auto capture...');
+      startAutoCapture();
+      
+    } catch (err: any) {
+      console.error('❌ Camera start error:', err);
+      setError(err.message || 'Tidak dapat mengakses kamera. Pastikan izin kamera sudah diberikan.');
+      setCameraStarted(false);
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        setStream(null);
+      }
+    }
+  };
+
+  // Auto capture 20 photos in 3 seconds
+  const startAutoCapture = async () => {
+    setIsCapturing(true);
+    setError('');
+    const capturedFiles: File[] = [];
+    const intervalMs = CAPTURE_DURATION / CAPTURE_COUNT;
+
+    // Countdown
+    for (let i = 3; i > 0; i--) {
+      setCountdown(i);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    setCountdown(0);
+
+    // Capture frames
+    for (let i = 0; i < CAPTURE_COUNT; i++) {
+      const file = await captureFrame(i);
+      if (file) {
+        capturedFiles.push(file);
+      } else {
+        console.warn(`Failed to capture frame ${i}`);
+      }
+      await new Promise(resolve => setTimeout(resolve, intervalMs));
+    }
+
+    console.log(`Captured ${capturedFiles.length} out of ${CAPTURE_COUNT} photos`);
+
+    setCapturedImages(capturedFiles);
+    setIsCapturing(false);
+
+    // Process captured images - require at least 10 photos
+    if (capturedFiles.length >= 10) {
+      await processCaptures(capturedFiles);
+    } else {
+      handleFailedAttempt(`Hanya berhasil mengambil ${capturedFiles.length} foto. Minimal 10 foto diperlukan.`);
+    }
+  };
+
+  const captureFrame = async (index: number): Promise<File | null> => {
+    if (!videoRef.current || !canvasRef.current) {
+      console.error('Video or canvas ref not available');
+      return null;
+    }
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
 
-    if (!context) return;
+    if (!context) {
+      console.error('Cannot get canvas context');
+      return null;
+    }
 
-    // Set canvas size to video size
+    // Check if video dimensions are valid
+    if (!video.videoWidth || !video.videoHeight) {
+      console.error('Video dimensions not ready:', video.videoWidth, video.videoHeight);
+      return null;
+    }
+
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-
-    // Draw video frame to canvas
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Convert to blob
-    canvas.toDataURL('image/jpeg', 0.95);
-    const imageUrl = canvas.toDataURL('image/jpeg', 0.95);
-    console.log("image url", imageUrl);
-    setCapturedImage(imageUrl);
-    setError('');
-  };
-  const retakePhoto = () => {
-    setCapturedImage(null);
-    setError('');
-  };
-  const submitPhoto = async () => {
-    if (!canvasRef.current) return;
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.95);
+    });
 
+    if (!blob) return null;
+
+    return new File([blob], `face_${index}.jpg`, { type: 'image/jpeg' });
+  };
+
+  const processCaptures = async (files: File[]) => {
+    if (files.length === 0) {
+      handleFailedAttempt('Gagal mengambil foto. Silakan coba lagi.');
+      return;
+    }
+
+    console.log(`Processing ${files.length} captured photos`);
     setIsProcessing(true);
-    setError('');
 
     try {
-      const canvasToFileImage = await new Promise<Blob>((resolve) => {
-        canvasRef.current?.toBlob((b) => {
-          if (b) resolve(b);
-        }, 'image/jpeg', 0.95);
-      });
+      // Step 1: Check last photo
+      const lastPhoto = files[files.length - 1];
+      console.log('Checking last photo:', lastPhoto.name, lastPhoto.size);
+      const checkResponse = await faceRecognitionApi.checkFace(lastPhoto);
+      console.log('Check face response:', checkResponse);
 
-      const file = new File([canvasToFileImage], 'face.jpg', { type: 'image/jpeg' });
-      console.log("blog image", canvasToFileImage);  
+      if (checkResponse.statusCode === 200 && checkResponse.data.has_face === true && checkResponse.data.count === 1) {
+        // Step 2: Enroll all photos
+        const enrollResponse = await faceRecognitionApi.enrollFace(files);
 
-      // Submit to API
-      const response = await faceRecognitionApi.checkFace(file);
+        if (enrollResponse.statusCode === 200 || enrollResponse.statusCode === 201) {
+          setSuccess(true);
+          
+          // Stop camera
+          if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+          }
 
-      if (response.statusCode === 200 && response.data.has_face && response.data.count === 1) {
-        // Success - face detected
-        setSuccess(true);
-        
-        // Stop camera
-        if (stream) {
-          stream.getTracks().forEach(track => track.stop());
+          // Redirect to dashboard
+          setTimeout(() => {
+            navigate('/dashboard', { replace: true });
+          }, 1500);
+        } else {
+          handleFailedAttempt('Gagal menyimpan data wajah. Silakan coba lagi.');
         }
-
-        // Redirect to dashboard after short delay
-        setTimeout(() => {
-          navigate('/dashboard', { replace: true });
-        }, 1500);
-      } else if (response.data.count === 0) {
-        // No face detected
+      } else if (checkResponse.data.count === 0) {
         handleFailedAttempt('Wajah tidak terdeteksi. Pastikan wajah Anda terlihat jelas.');
-      } else if (response.data.count > 1) {
-        // Multiple faces detected
+      } else if (checkResponse.data.count > 1) {
         handleFailedAttempt('Terdeteksi lebih dari 1 wajah. Pastikan hanya wajah Anda yang terlihat.');
       } else {
         handleFailedAttempt('Gagal mendeteksi wajah. Silakan coba lagi.');
@@ -132,20 +238,25 @@ const FaceRegistrationPage = () => {
       handleFailedAttempt(err.response?.data?.message || 'Terjadi kesalahan. Silakan coba lagi.');
     } finally {
       setIsProcessing(false);
-    };
+    }
   };
   const handleFailedAttempt = (message: string) => {
     const newAttempts = attempts + 1;
     setAttempts(newAttempts);
     setError(message);
-    setCapturedImage(null);
+    setCapturedImages([]);
+    setCameraStarted(false);
+    setCountdown(3);
+
+    // Stop camera
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
 
     if (newAttempts >= MAX_ATTEMPTS) {
       // Max attempts reached - redirect to landing
       setTimeout(() => {
-        if (stream) {
-          stream.getTracks().forEach(track => track.stop());
-        }
         navigate('/', { replace: true });
       }, 2000);
     };
@@ -164,7 +275,6 @@ const FaceRegistrationPage = () => {
       </div>
     );
   };
-
   if (attempts >= MAX_ATTEMPTS) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-red-100">
@@ -185,11 +295,8 @@ const FaceRegistrationPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
       <Card className="p-6 max-w-2xl w-full">
-        <div className="text-center mb-6">
+        <div className="text-center">
           <h1 className="text-3xl font-bold mb-2">Registrasi Wajah</h1>
-          <p className="text-muted-foreground">
-            Ambil foto wajah Anda dengan pencahayaan yang baik
-          </p>
           <p className="text-sm text-muted-foreground mt-2">
             Percobaan: {attempts + 1} / {MAX_ATTEMPTS}
           </p>
@@ -202,80 +309,79 @@ const FaceRegistrationPage = () => {
         )}
         {/* Main Content */}
         <div className="space-y-4">
-          {/* Camera/Image Preview */}
-          <div className="relative bg-black rounded-lg overflow-hidden aspect-video">
-            {!capturedImage ? (
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <img
-                src={capturedImage}
-                alt="Captured"
-                className="w-full h-full object-cover"
-              />
-            )}
-            
-            {/* Hidden canvas for capture */}
-            <canvas ref={canvasRef} className="hidden" />
-          </div>
-          {/* Tips */}
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-            <p className="text-sm font-medium text-blue-900 mb-2">Tips:</p>
-            <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
-              <li>Pastikan wajah Anda terlihat jelas</li>
-              <li>Gunakan pencahayaan yang cukup</li>
-              <li>Hindari backlight (cahaya dari belakang)</li>
-              <li>Hanya 1 wajah yang terlihat di kamera</li>
-            </ul>
-          </div>
-          {/* Action Buttons */}
-          <div className="flex gap-3">
-            {!capturedImage ? (
+          {!cameraStarted ? (
+            <>
+              {/* Tips */}
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-4 space-y-3">
+                <p className="text-sm font-medium text-black mb-2">Sebelum mengambil foto, pastikan:</p>
+                <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
+                  <li>Wajah Anda sudah didepan kamera</li>
+                  <li>Wajah Anda terlihat dengan jelas</li>
+                  <li>Pencahayaan yang cukup</li>
+                  <li>Hindari backlight (cahaya dari belakang)</li>
+                  <li>Hanya 1 wajah yang terlihat di kamera</li>
+                </ul>
+                <p className="text-sm font-medium text-black mt-3">Sistem akan mengambil 20 foto secara otomatis dalam 3 detik.</p>
+                <p className="text-sm font-medium text-black">Jika sudah siap, tekan tombol "Buka Kamera" untuk memulai.</p>
+              </div>
+              {/* Action Button */}
               <Button
-                onClick={capturePhoto}
-                className="flex-1"
+                onClick={startCamera}
+                className="w-full"
                 size="lg"
+                disabled={isProcessing}
               >
                 <Camera className="h-5 w-5 mr-2" />
-                Ambil Foto
+                Buka Kamera
               </Button>
-            ) : (
-              <>
-                <Button
-                  onClick={retakePhoto}
-                  variant="outline"
-                  className="flex-1"
-                  size="lg"
-                  disabled={isProcessing}
-                >
-                  <RefreshCw className="h-5 w-5 mr-2" />
-                  Ulangi
-                </Button>
-                <Button
-                  onClick={submitPhoto}
-                  className="flex-1"
-                  size="lg"
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? (
-                    <>
-                      <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
-                      Memproses...
-                    </>
-                  ) : (
-                    <>
-                      <Check className="h-5 w-5 mr-2" />
-                      Submit
-                    </>
-                  )}
-                </Button>
-              </>
-            )}
-          </div>
+            </>
+          ) : (
+            <>
+              {/* Camera Preview */}
+              <div className="relative bg-black/10 rounded-lg overflow-hidden aspect-video">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+                {/* Countdown Overlay */}
+                {countdown > 0 && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                    <div className="text-white text-8xl font-bold animate-pulse">
+                      {countdown}
+                    </div>
+                  </div>
+                )}
+                {/* Capturing Indicator */}
+                {isCapturing && countdown === 0 && (
+                  <div className="absolute top-4 left-4 bg-red-500 text-white px-4 py-2 rounded-full flex items-center gap-2">
+                    <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+                    <span className="text-sm font-medium">Mengambil Foto...</span>
+                  </div>
+                )}
+                {/* Processing Indicator */}
+                {isProcessing && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/70">
+                    <div className="text-center">
+                      <RefreshCw className="h-12 w-12 text-white animate-spin mx-auto mb-2" />
+                      <p className="text-white font-medium">Memproses wajah Anda...</p>
+                    </div>
+                  </div>
+                )}
+                {/* Hidden canvas for capture */}
+                <canvas ref={canvasRef} className="hidden" />
+              </div>
+              {/* Progress Info */}
+              {isCapturing && (
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-3 text-center">
+                  <p className="text-sm font-medium text-blue-700">
+                    Foto diambil: {capturedImages.length} / {CAPTURE_COUNT}
+                  </p>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </Card>
     </div>

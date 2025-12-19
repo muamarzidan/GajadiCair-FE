@@ -30,8 +30,7 @@ const LoginPage = () => {
   // Redirect if already authenticated
   useEffect(() => {
     if (!authLoading && isAuthenticated && user) {
-      // Check if employee needs face registration
-      if (user.role === 'employee' && user.face_id === null) {
+      if (user.role === 'employee' && user.is_face_enrolled === false) {
         navigate('/face-registration', { 
           replace: true,
           state: { fromLogin: true }
@@ -67,7 +66,6 @@ const LoginPage = () => {
         password: employeePassword 
       });
       
-      // Navigation handled by useEffect based on face_id
     } catch (error: any) {
       setError(error.message);
     } finally {

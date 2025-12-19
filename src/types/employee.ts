@@ -6,7 +6,7 @@ export interface Employee {
   password?: string;
   is_active: boolean;
   base_salary: number;
-  face_id: string | null;
+  is_face_enrolled: boolean;
   bank_id: string | null;
   bank_account_number: string | null;
   tax_identification_number: string | null;

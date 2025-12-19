@@ -4,6 +4,7 @@ import {
   Sparkles,
   SquareTerminal,
   Users,
+  Calendar,
 } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -47,6 +48,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ],
       },
     ];
+    
+    if (user?.role === 'employee') {
+      items.push({
+        title: "Attendance",
+        url: "#",
+        icon: Calendar,
+        items: [
+          {
+            title: "My Attendance",
+            url: "/attendance",
+          },
+        ],
+      });
+    }
+    
     if (user?.role === 'company') {
       items.push({
         title: "Employee",
