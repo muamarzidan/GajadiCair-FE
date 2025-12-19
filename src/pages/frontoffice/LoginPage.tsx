@@ -2,11 +2,11 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import type { CredentialResponse } from '@react-oauth/google';
 import { GoogleLogin } from '@react-oauth/google';
+import { Eye, EyeOff, AlertCircle, Home, Building2, Users } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Eye, EyeOff, AlertCircle, Home, Building2, Users } from 'lucide-react';
 
 
 type LoginMode = 'company' | 'employee';
@@ -14,7 +14,7 @@ type LoginMode = 'company' | 'employee';
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, isLoading: authLoading, loginAsCompany, loginAsEmployee, loginWithGoogle } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user, loginAsCompany, loginAsEmployee, loginWithGoogle } = useAuth();
   const [loginMode, setLoginMode] = useState<LoginMode>('company');
   const [showPassword, setShowPassword] = useState(false);
   const [companyEmail, setCompanyEmail] = useState('');
@@ -29,10 +29,17 @@ const LoginPage = () => {
   
   // Redirect if already authenticated
   useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      navigate(from, { replace: true });
-    };
-  }, [authLoading, isAuthenticated, navigate, from]);
+    if (!authLoading && isAuthenticated && user) {
+      if (user.role === 'employee' && user.is_face_enrolled === false) {
+        navigate('/face-registration', { 
+          replace: true,
+          state: { fromLogin: true }
+        });
+      } else {
+        navigate(from, { replace: true });
+      }
+    }
+  }, [authLoading, isAuthenticated, user, navigate, from]);
   
   const handleCompanyLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,13 +60,17 @@ const LoginPage = () => {
     setIsLoading(true);
     
     try {
-      await loginAsEmployee({ company_id: employeeCompanyId, employee_id: employeeId, password: employeePassword });
-      navigate(from, { replace: true });
+      await loginAsEmployee({ 
+        company_id: employeeCompanyId, 
+        employee_id: employeeId, 
+        password: employeePassword 
+      });
+      
     } catch (error: any) {
       setError(error.message);
     } finally {
       setIsLoading(false);
-    };
+    }
   };
   const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     if (!credentialResponse.credential) {

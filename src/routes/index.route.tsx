@@ -8,6 +8,10 @@ import LoginPage from "@/pages/frontoffice/LoginPage";
 import RegisterPage from "@/pages/frontoffice/RegisterPage";
 import DashboardPage from "@/pages/backoffice/DashboardPage";
 import EmployeePage from "@/pages/backoffice/employees/EmployeePage";
+import UpgradePage from "@/pages/backoffice/UpgradePage";
+import AttendancePage from "@/pages/backoffice/AttendancePage";
+import FaceRegistrationPage from "@/pages/backoffice/FaceRegistrationPage";
+
 
 export const router = createBrowserRouter([
   {
@@ -71,5 +75,26 @@ export const router = createBrowserRouter([
         <EmployeePage />
       </ProtectedRoute>
     ),
+  },
+  {
+    path: "/upgrade",
+    element: (
+      <ProtectedRoute requiredRole="company">
+        <UpgradePage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/attendance",
+    element: (
+      <ProtectedRoute requiredRole="employee">
+        <AttendancePage />
+      </ProtectedRoute>
+    ),
+  },
+  // Face Registration (protected by navigation state check)
+  {
+    path: "/face-registration",
+    element: <FaceRegistrationPage />,
   },
 ]);
