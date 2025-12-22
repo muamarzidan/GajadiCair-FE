@@ -81,8 +81,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     return items;
   }, [user?.role]);
 
-  console.log('Rendering AppSidebar with user:', user);
-
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>

@@ -70,19 +70,5 @@ export const PLAN_CONFIGS: Record<number, PlanInfo> = {
       'Potongan Gaji Otomatis',
       'Export Laporan Absensi',
     ],
-  },
-  4: {
-    level: 4,
-    name: 'ENTERPRISE',
-    price: 1499000,
-    priceLabel: 'Rp 1.499.000',
-    features: [
-      'Karyawan Tidak Terbatas',
-      'Semua fitur PRO',
-      'Custom Integration API',
-      'Dedicated Account Manager',
-      'Dukungan Prioritas 24/7',
-      'Training & Onboarding',
-    ],
-  },
+  }
 };

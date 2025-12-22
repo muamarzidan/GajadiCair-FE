@@ -60,25 +60,28 @@ const UpgradePage = () => {
       const response = await subscriptionApi.createSubscription({ level_plan: levelPlan });
 
       if (response.statusCode === 201 && response.data.token) {
-        // Open Midtrans Snap
         openMidtransSnap(response.data.token, {
-          skipOrderSummary: false,
-          uiMode: 'deeplink',
-          finishRedirectUrl: window.location.origin + '/upgrade',
           onSuccess: (result) => {
             console.log('Payment success:', result);
             alert('Payment berhasil! Silakan refresh halaman.');
+            setIsProcessing(false);
+            setProcessingPlan(null);
             window.location.reload();
           },
           onPending: (result) => {
             console.log('Payment pending:', result);
             alert('Pembayaran menunggu. Silakan selesaikan pembayaran Anda.');
+            setIsProcessing(false);
+            setProcessingPlan(null);
           },
           onError: (result) => {
             console.error('Payment error:', result);
             alert('Pembayaran gagal. Silakan coba lagi.');
+            setIsProcessing(false);
+            setProcessingPlan(null);
           },
           onClose: () => {
+            console.log('Payment popup closed');
             setIsProcessing(false);
             setProcessingPlan(null);
           },
@@ -104,9 +107,7 @@ const UpgradePage = () => {
         ? 'Untuk startup dan tim kecil'
         : plan.level === 2
         ? 'Untuk perusahaan berkembang'
-        : plan.level === 3
-        ? 'Untuk perusahaan besar'
-        : 'Untuk enterprise dan skala besar',
+        : 'Untuk perusahaan besar',
     features: plan.features.map((feature) => ({ text: feature, included: true })),
     cta:
       plan.level === currentPlan
@@ -117,8 +118,6 @@ const UpgradePage = () => {
         ? 'Choose BASIC'
         : plan.level === 3
         ? 'Choose PRO'
-        : plan.level === 4
-        ? 'Choose ENTERPRISE'
         : 'Start Now',
     isCurrentPlan: plan.level === currentPlan,
   }));
@@ -144,17 +143,17 @@ const UpgradePage = () => {
             </Breadcrumb>
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-6 p-6">
+        <div className="flex flex-1 flex-col gap-16 p-6">
           {/* Header */}
           <div className="flex items-center flex-col gap-1 justify-start">
             <h1 className="text-3xl font-bold tracking-tight">
               Choose a Package
             </h1>
             <p className="text-muted-foreground">
-              Start for free and upgrade anytime as your company grows.
+              Start for free and upgrade anytime as your company grows
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-16 max-w-7xl mx-auto">
             {pricingTiers.map((tier, index) => (
               <Card
                 key={index}
@@ -210,7 +209,7 @@ const UpgradePage = () => {
                     variant={tier.isCurrentPlan ? "outline" : "default"}
                     size="lg"
                     className="w-full !py-6"
-                    disabled={tier.isCurrentPlan || tier.level < currentPlan || isProcessing}
+                    disabled={tier.isCurrentPlan || isProcessing}
                     onClick={() => handleUpgrade(tier.level)}
                   >
                     {processingPlan === tier.level ? (

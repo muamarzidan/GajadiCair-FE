@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Camera, Clock, MapPin, Check, X, RefreshCw, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
-import { useGeolocated } from 'react-geolocated';
 
 import { attendanceApi, type TodayAttendanceStatus, type AttendanceRecord } from '@/services/attendance';
 import { AppSidebar } from '@/components/app-sidebar';
@@ -43,21 +42,16 @@ const AttendancePage = () => {
   const [success, setSuccess] = useState('');
   const [showCamera, setShowCamera] = useState(false);
   const [checkType, setCheckType] = useState<'in' | 'out'>('in');
-
-  // Use react-geolocated hook
-  const { coords, isGeolocationAvailable, isGeolocationEnabled } =
-    useGeolocated({
-      positionOptions: {
-        enableHighAccuracy: true,
-      },
-      userDecisionTimeout: 10000,
-      watchPosition: false,
-    });
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [geoError, setGeoError] = useState<string>('');
+  const [checkInEligibility, setCheckInEligibility] = useState<any>(null);
+  const [checkOutEligibility, setCheckOutEligibility] = useState<any>(null);
 
   // Load initial data
   useEffect(() => {
     loadTodayStatus();
     loadAttendanceHistory();
+    loadEligibility();
   }, []);
   // Cleanup camera on unmount
   useEffect(() => {
@@ -88,21 +82,87 @@ const AttendancePage = () => {
       console.error('Failed to load attendance history:', err);
     }
   };
+  
+  const loadEligibility = async () => {
+    try {
+      const [checkInRes, checkOutRes] = await Promise.all([
+        attendanceApi.checkInCheck(),
+        attendanceApi.checkOutCheck(),
+      ]);
+      
+      if (checkInRes.statusCode === 200) {
+        setCheckInEligibility(checkInRes.data);
+      }
+      if (checkOutRes.statusCode === 200) {
+        setCheckOutEligibility(checkOutRes.data);
+      }
+    } catch (err) {
+      console.error('Failed to load eligibility:', err);
+    }
+  };
   const startCamera = async () => {
     try {
       setError('');
       setSuccess('');
+      setGeoError('');
 
-      // Check geolocation availability
-      if (!isGeolocationAvailable) {
+      // Check both permissions first
+      if (!navigator.geolocation) {
         throw new Error('Geolocation tidak didukung oleh browser Anda');
       }
-      if (!isGeolocationEnabled) {
-        throw new Error('Izin geolocation ditolak. Mohon aktifkan akses lokasi');
+
+      let locationPermission = 'unknown';
+      let cameraPermission = 'unknown';
+
+      // Check location permission
+      try {
+        const locPerm = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
+        locationPermission = locPerm.state;
+      } catch (e) {
+        console.log('Cannot check location permission:', e);
       }
-      if (!coords) {
-        throw new Error('Sedang mengambil lokasi Anda...');
+
+      // Check camera permission
+      try {
+        const camPerm = await navigator.permissions.query({ name: 'camera' as PermissionName });
+        cameraPermission = camPerm.state;
+      } catch (e) {
+        console.log('Cannot check camera permission:', e);
       }
+
+      // If either is denied, show instructions
+      const deniedPermissions = [];
+      if (locationPermission === 'denied') {
+        deniedPermissions.push('Lokasi');
+      }
+      if (cameraPermission === 'denied') {
+        deniedPermissions.push('Kamera');
+      }
+
+      if (deniedPermissions.length > 0) {
+        throw new Error(
+          `Izin ${deniedPermissions.join(' dan ')} ditolak. Mohon aktifkan di pengaturan browser:\n\n` +
+          `1. Klik ikon gembok (🔒) di sebelah kiri address bar\n` +
+          `2. Pilih "Site settings" atau "Pengaturan situs"\n` +
+          `3. Ubah izin "Location" dan "Camera" menjadi "Allow"\n` +
+          `4. Reload halaman dan coba lagi`
+        );
+      }
+
+      // Get current position - this will trigger browser permission prompt if needed
+      // Using more relaxed settings for better compatibility
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: false, // Set false untuk lebih cepat
+          timeout: 30000, // 30 detik timeout
+          maximumAge: 60000, // Cache 1 menit OK
+        });
+      });
+
+      setCoords({
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      });
 
       // Get camera stream
       const mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -124,9 +184,32 @@ const AttendancePage = () => {
         // Let the video play automatically without calling play()
         // to avoid "interrupted by new load request" error
       }
-    } catch (err) {
-      const error = err as Error;
-      setError(error.message || 'Gagal membuka kamera');
+    } catch (err: any) {
+      // Handle geolocation errors
+      if (err.code === 1 || err.message?.includes('ditolak')) {
+        setError(
+          'Izin Lokasi ditolak. Mohon aktifkan akses lokasi:\n\n' +
+          '1. Klik ikon gembok (🔒) di sebelah kiri address bar\n' +
+          '2. Pilih "Site settings" atau "Pengaturan situs"\n' +
+          '3. Ubah "Location" menjadi "Allow"\n' +
+          '4. Reload halaman dan coba lagi'
+        );
+      } else if (err.code === 2) {
+        setError('Lokasi tidak tersedia. Mohon periksa pengaturan lokasi Anda.');
+      } else if (err.code === 3) {
+        setError('Timeout saat mendapatkan lokasi. Mohon coba lagi.');
+      } else if (err.name === 'NotAllowedError' || err.message?.includes('Permission denied')) {
+        setError(
+          'Izin Kamera ditolak. Mohon aktifkan akses kamera:\n\n' +
+          '1. Klik ikon gembok (🔒) di sebelah kiri address bar\n' +
+          '2. Pilih "Site settings" atau "Pengaturan situs"\n' +
+          '3. Ubah "Camera" menjadi "Allow"\n' +
+          '4. Reload halaman dan coba lagi'
+        );
+      } else {
+        const error = err as Error;
+        setError(error.message || 'Gagal membuka kamera');
+      }
     }
   };
 
@@ -176,6 +259,7 @@ const AttendancePage = () => {
           setSuccess('Check-in berhasil!');
           await loadTodayStatus();
           await loadAttendanceHistory();
+          await loadEligibility();
           closeCamera();
         } else {
           throw new Error(response.message || 'Check-in gagal');
@@ -186,14 +270,15 @@ const AttendancePage = () => {
           setSuccess('Check-out berhasil!');
           await loadTodayStatus();
           await loadAttendanceHistory();
+          await loadEligibility();
           closeCamera();
         } else {
           throw new Error(response.message || 'Check-out gagal');
         }
       }
-    } catch (err) {
-      const error = err as Error;
-      setError(error.message || 'Terjadi kesalahan');
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || err.message || 'Terjadi kesalahan';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -309,10 +394,19 @@ const AttendancePage = () => {
                       : '-'}
                   </div>
                   {!todayStatus?.has_checked_in && (
-                    <Button onClick={handleCheckIn} disabled={loading} className="mt-2">
-                      <Camera className="h-4 w-4 mr-2" />
-                      Check In
-                    </Button>
+                    <>
+                      <Button 
+                        onClick={handleCheckIn} 
+                        disabled={loading || !checkInEligibility?.can_check_in} 
+                        className="mt-2"
+                      >
+                        <Camera className="h-4 w-4 mr-2" />
+                        Check In
+                      </Button>
+                      {checkInEligibility && !checkInEligibility.can_check_in && checkInEligibility.reason && (
+                        <p className="text-xs text-red-500 mt-1">{checkInEligibility.reason}</p>
+                      )}
+                    </>
                   )}
                 </div>
 
@@ -327,10 +421,20 @@ const AttendancePage = () => {
                       : '-'}
                   </div>
                   {todayStatus?.has_checked_in && !todayStatus?.has_checked_out && (
-                    <Button onClick={handleCheckOut} disabled={loading} variant="outline" className="mt-2">
-                      <Camera className="h-4 w-4 mr-2" />
-                      Check Out
-                    </Button>
+                    <>
+                      <Button 
+                        onClick={handleCheckOut} 
+                        disabled={loading || !checkOutEligibility?.can_check_out} 
+                        variant="outline" 
+                        className="mt-2"
+                      >
+                        <Camera className="h-4 w-4 mr-2" />
+                        Check Out
+                      </Button>
+                      {checkOutEligibility && !checkOutEligibility.can_check_out && checkOutEligibility.reason && (
+                        <p className="text-xs text-red-500 mt-1">{checkOutEligibility.reason}</p>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -382,22 +486,10 @@ const AttendancePage = () => {
                     Lokasi: {coords.latitude.toFixed(6)}, {coords.longitude.toFixed(6)}
                   </div>
                 )}
-                {!isGeolocationAvailable && (
+                {geoError && (
                   <div className="flex items-center gap-2 text-sm text-red-500">
                     <MapPin className="h-4 w-4" />
-                    Geolocation tidak didukung browser Anda
-                  </div>
-                )}
-                {isGeolocationAvailable && !isGeolocationEnabled && (
-                  <div className="flex items-center gap-2 text-sm text-red-500">
-                    <MapPin className="h-4 w-4" />
-                    Izin lokasi ditolak. Mohon aktifkan akses lokasi
-                  </div>
-                )}
-                {isGeolocationAvailable && isGeolocationEnabled && !coords && (
-                  <div className="flex items-center gap-2 text-sm text-yellow-600">
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                    Mengambil lokasi Anda...
+                    {geoError}
                   </div>
                 )}
 

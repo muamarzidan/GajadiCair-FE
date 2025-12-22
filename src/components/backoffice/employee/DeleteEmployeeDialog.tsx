@@ -41,7 +41,7 @@ export const DeleteEmployeeDialog = ({
         onOpenChange(false);
       }
     } catch (error: any) {
-      console.error('❌ Failed to delete employee:', error);
+      console.error('Failed to delete employee:', error);
       const errorMessage = error.response?.data?.message || 'Failed to delete employee';
       setError(errorMessage);
     } finally {

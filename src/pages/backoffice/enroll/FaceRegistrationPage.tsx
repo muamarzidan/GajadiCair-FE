@@ -45,8 +45,6 @@ const FaceRegistrationPage = () => {
   const startCamera = async () => {
     try {
       setError('');
-      console.log('Requesting camera access...');
-      
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 1280 },
@@ -55,11 +53,9 @@ const FaceRegistrationPage = () => {
         }
       });
       
-      console.log('Camera access granted');
       setStream(mediaStream);
       setCameraStarted(true);
       
-      // Wait for next render cycle so video element is mounted
       await new Promise(resolve => setTimeout(resolve, 100));
       
       if (!videoRef.current) {
@@ -71,8 +67,7 @@ const FaceRegistrationPage = () => {
       
       // Play video
       await video.play();
-      console.log('Video started playing');
-      
+
       // Wait for video dimensions using requestAnimationFrame
       const waitForVideo = (): Promise<void> => {
         return new Promise((resolve, reject) => {
@@ -81,7 +76,6 @@ const FaceRegistrationPage = () => {
           
           const checkDimensions = () => {
             if (video.videoWidth > 0 && video.videoHeight > 0) {
-              console.log('✅ Video ready:', video.videoWidth, 'x', video.videoHeight);
               resolve();
               return;
             }
@@ -91,7 +85,6 @@ const FaceRegistrationPage = () => {
               return;
             }
             
-            console.log('⏳ Waiting for video dimensions...');
             requestAnimationFrame(checkDimensions);
           };
           
@@ -104,11 +97,9 @@ const FaceRegistrationPage = () => {
       // Additional small delay for stability
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      console.log('🚀 Starting auto capture...');
       startAutoCapture();
       
     } catch (err: any) {
-      console.error('❌ Camera start error:', err);
       setError(err.message || 'Tidak dapat mengakses kamera. Pastikan izin kamera sudah diberikan.');
       setCameraStarted(false);
       if (stream) {
@@ -185,13 +176,11 @@ const FaceRegistrationPage = () => {
       return;
     }
 
-    console.log(`Processing ${files.length} captured photos`);
     setIsProcessing(true);
 
     try {
       const lastPhoto = files[files.length - 1];
       const checkResponse = await faceRecognitionApi.checkFace(lastPhoto);
-      console.log('Check face response:', checkResponse);
 
       if (checkResponse.statusCode === 200 && checkResponse.data.has_face === true && checkResponse.data.count === 1) {
         const enrollResponse = await faceRecognitionApi.enrollFace(files);

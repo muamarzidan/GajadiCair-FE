@@ -5,6 +5,8 @@ import type {
   TodayAttendanceStatus,
   CheckInResponse,
   CheckOutResponse,
+  CheckInEligibility,
+  CheckOutEligibility,
 } from '@/types/attendance';
 
 export const attendanceApi = {
@@ -59,6 +61,18 @@ export const attendanceApi = {
           'Content-Type': 'multipart/form-data',
         },
       }
+    );
+    return response.data;
+  },
+  checkInCheck: async (): Promise<ApiResponse<CheckInEligibility>> => {
+    const response = await apiClient.get<ApiResponse<CheckInEligibility>>(
+      '/api/v1/employee/attendance/check-in-check'
+    );
+    return response.data;
+  },
+  checkOutCheck: async (): Promise<ApiResponse<CheckOutEligibility>> => {
+    const response = await apiClient.get<ApiResponse<CheckOutEligibility>>(
+      '/api/v1/employee/attendance/check-out-check'
     );
     return response.data;
   },

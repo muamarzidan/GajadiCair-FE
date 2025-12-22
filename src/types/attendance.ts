@@ -50,6 +50,21 @@ export interface CheckOutResponse {
   message: string;
 }
 
+export interface CheckInEligibility {
+  can_check_in: boolean;
+  remaining_time_until_closed: number | null;
+  opened_time: string | null;
+  closed_time: string | null;
+  reason: string | null;
+}
+
+export interface CheckOutEligibility {
+  can_check_out: boolean;
+  min_hours: number | null;
+  worked_hours: number | null;
+  reason: string | null;
+}
+
 export interface GeolocationCoordinates {
   latitude: number;
   longitude: number;

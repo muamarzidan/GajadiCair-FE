@@ -97,7 +97,7 @@ const LoginPage = () => {
     <div className="w-full max-w-md mx-auto">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gradient mb-2">GajadiCair</h1>
-        <p className="text-muted-foreground">Login to your account</p>
+        <p className="text-muted-foreground">SigIn to your account</p>
       </div>
       <Card className="p-6">
         <div className="flex gap-2 mb-6">
