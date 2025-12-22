@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, AlertCircle, Home } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 
@@ -68,7 +68,7 @@ const RegisterPage = () => {
     <div className="w-full max-w-md mx-auto">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gradient mb-2">Gajadicair</h1>
-        <p className="text-muted-foreground">Buat akun baru Anda</p>
+        <p className="text-muted-foreground">Create your company's new account</p>
       </div>
 
       <Card className="p-6">
@@ -82,7 +82,7 @@ const RegisterPage = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="name" className="block text-sm font-medium mb-2">
-              Nama Lengkap
+              Nama Company 
             </label>
             <input
               id="name"
@@ -139,10 +139,9 @@ const RegisterPage = () => {
               </button>
             </div>
           </div>
-
           <div>
             <label htmlFor="confirmPassword" className="block text-sm font-medium mb-2">
-              Konfirmasi Password
+              Password Confirmation
             </label>
             <input
               id="confirmPassword"
@@ -151,32 +150,32 @@ const RegisterPage = () => {
               value={formData.confirmPassword}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="Ulangi password"
+              placeholder="Type password again"
               disabled={isLoading}
               required
             />
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Sedang mendaftar..." : "Daftar"}
+            {isLoading ? "Signing Up..." : "Sign Up"}
           </Button>
         </form>
 
         <div className="mt-6 text-center space-y-2">
           <div>
-            <span className="text-sm text-muted-foreground">Sudah punya akun? </span>
+            <span className="text-sm text-muted-foreground">Have an account? </span>
             <Link 
               to="/login" 
               className="text-sm text-primary hover:underline"
             >
-              Masuk sekarang
+              Sign in now
             </Link>
           </div>
           <Link 
             to="/" 
             className="block text-sm text-muted-foreground hover:text-primary transition-colors"
           >
-            ← Kembali ke beranda
+            <Home className="inline h-4 w-4" /> Back to Home
           </Link>
         </div>
       </Card>

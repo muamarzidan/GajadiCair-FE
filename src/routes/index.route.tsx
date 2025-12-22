@@ -11,6 +11,8 @@ import EmployeePage from "@/pages/backoffice/employees/EmployeePage";
 import UpgradePage from "@/pages/backoffice/UpgradePage";
 import AttendancePage from "@/pages/backoffice/attendance/AttendancePage";
 import FaceRegistrationPage from "@/pages/backoffice/enroll/FaceRegistrationPage";
+import ProfilePage from "@/pages/backoffice/ProfilePage";
+import SettingsPage from "@/pages/backoffice/SettingsPage";
 
 
 export const router = createBrowserRouter([
@@ -89,6 +91,22 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute requiredRole="employee">
         <AttendancePage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/profile",
+    element: (
+      <ProtectedRoute>
+        <ProfilePage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/settings",
+    element: (
+      <ProtectedRoute requiredRole="company">
+        <SettingsPage />
       </ProtectedRoute>
     ),
   },

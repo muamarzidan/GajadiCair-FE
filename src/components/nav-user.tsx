@@ -2,10 +2,12 @@ import {
   BadgeCheck,
   ChevronsUpDown,
   LogOut,
-  Sparkles,
+  Settings,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { getImageUrl } from "@/utils";
 import {
   Avatar,
   AvatarFallback,
@@ -37,15 +39,24 @@ export function NavUser({
     avatar: string
   }
 }) {
-  const { isMobile } = useSidebar()
-  const { logout } = useAuth()
+  const { isMobile } = useSidebar();
+  const { logout, userRole } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
-      await logout()
+      await logout();
     } catch (error) {
-      console.error(error)
+      console.error(error);
     };
+  };
+
+  const handleNavigateToProfile = () => {
+    navigate('/profile');
+  };
+
+  const handleNavigateToSettings = () => {
+    navigate('/settings');
   };
 
   return (
@@ -58,7 +69,7 @@ export function NavUser({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user?.avatar} alt={user.name} />
+                <AvatarImage src={getImageUrl(user?.avatar)} alt={user.name} />
                 <AvatarFallback className="rounded-lg">CN</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
@@ -77,7 +88,7 @@ export function NavUser({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarImage src={getImageUrl(user.avatar)} alt={user.name} />
                   <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
@@ -88,20 +99,19 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem className="focus:bg-accent">
-                <Sparkles />
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem className="focus:bg-accent">
+              <DropdownMenuItem onClick={handleNavigateToProfile} className="focus:bg-accent cursor-pointer">
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>
+              {userRole === 'company' && (
+                <DropdownMenuItem onClick={handleNavigateToSettings} className="focus:bg-accent cursor-pointer">
+                  <Settings />
+                  Settings
+                </DropdownMenuItem>
+              )}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="focus:bg-red-100">
+            <DropdownMenuItem onClick={handleLogout} className="focus:bg-red-100 cursor-pointer">
               <LogOut />
               Log out
             </DropdownMenuItem>
