@@ -1,6 +1,7 @@
 export interface Employee {
   employee_id: string;
   name: string;
+  username: string;
   email: string;
   company_id: string;
   password?: string;
@@ -18,6 +19,7 @@ export interface Employee {
 }
 export interface CreateEmployeeRequest {
   name: string;
+  username: string;
   email: string;
   password: string;
   base_salary: number;
@@ -28,6 +30,7 @@ export interface CreateEmployeeRequest {
 }
 export interface UpdateEmployeeRequest {
   name?: string;
+  username?: string;
   email?: string;
   password?: string;
   base_salary?: number;

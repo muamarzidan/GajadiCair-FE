@@ -49,8 +49,8 @@ export const authApi = {
     if (access_token) {
       localStorage.setItem('access_token-gjdc', access_token);
       localStorage.setItem('employee_credentials-gjdc', JSON.stringify({
-        company_id: data.company_id,
-        employee_id: data.employee_id,
+        username: data.username,
+        company_identifier: data.company_identifier,
         password: data.password,
       }));
     } else {

@@ -19,8 +19,8 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [companyEmail, setCompanyEmail] = useState('');
   const [companyPassword, setCompanyPassword] = useState('');
-  const [employeeCompanyId, setEmployeeCompanyId] = useState('');
-  const [employeeId, setEmployeeId] = useState('');
+  const [employeeUsername, setEmployeeUsername] = useState('');
+  const [employeeCompanyIdentifier, setEmployeeCompanyIdentifier] = useState('');
   const [employeePassword, setEmployeePassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -37,8 +37,8 @@ const LoginPage = () => {
         });
       } else {
         navigate(from, { replace: true });
-      }
-    }
+      };
+    };
   }, [authLoading, isAuthenticated, user, navigate, from]);
   
   const handleCompanyLogin = async (e: React.FormEvent) => {
@@ -61,8 +61,8 @@ const LoginPage = () => {
     
     try {
       await loginAsEmployee({ 
-        company_id: employeeCompanyId, 
-        employee_id: employeeId, 
+        company_identifier: employeeCompanyIdentifier, 
+        username: employeeUsername, 
         password: employeePassword 
       });
       
@@ -137,12 +137,12 @@ const LoginPage = () => {
         {loginMode === 'employee' && (
           <form onSubmit={handleEmployeeLogin} className="space-y-4">
             <div>
-              <label htmlFor="employee-company-id" className="block text-sm font-medium mb-2">Company ID</label>
-              <input id="employee-company-id" type="text" value={employeeCompanyId} onChange={(e) => setEmployeeCompanyId(e.target.value)} className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" placeholder="company-uuid" disabled={isLoading} required />
+              <label htmlFor="employee-company-identifier" className="block text-sm font-medium mb-2">Company Code</label>
+              <input id="employee-company-identifier" type="text" value={employeeCompanyIdentifier} onChange={(e) => setEmployeeCompanyIdentifier(e.target.value)} className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" placeholder="company code" disabled={isLoading} required />
             </div>
             <div>
-              <label htmlFor="employee-id" className="block text-sm font-medium mb-2">Employee ID</label>
-              <input id="employee-id" type="text" value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" placeholder="employee-uuid" disabled={isLoading} required />
+              <label htmlFor="employee-username" className="block text-sm font-medium mb-2">Employee Username</label>
+              <input id="employee-username" type="text" value={employeeUsername} onChange={(e) => setEmployeeUsername(e.target.value)} className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" placeholder="username" disabled={isLoading} required />
             </div>
             <div>
               <label htmlFor="employee-password" className="block text-sm font-medium mb-2">Password</label>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Search, Pencil, Trash2, Loader2 } from 'lucide-react';
 
 import { employeeApi, type Employee } from '@/services/employee';
+import { bankApi, type Bank } from '@/services/bank';
 import { EmployeeFormDialog } from '@/components/backoffice/employee/EmployeeFormDialog';
 import { DeleteEmployeeDialog } from '@/components/backoffice/employee/DeleteEmployeeDialog';
 import { formatCurrency, formatDate } from '@/utils';
@@ -35,6 +36,7 @@ import { Badge } from '@/components/ui/badge';
 
 const EmployeePage = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [banks, setBanks] = useState<Bank[]>([]);
   const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -57,9 +59,24 @@ const EmployeePage = () => {
       setIsLoading(false);
     };
   };
+  const fetchBanks = async () => {
+    try {
+      setIsLoading(true);
+      const response = await bankApi.getBanks();
+      
+      if (response.statusCode === 200) {
+        setBanks(response.data);
+      };
+    } catch (error) {
+      console.error('Failed to fetch banks:', error);
+    } finally {
+      setIsLoading(false);
+    };
+  };
 
   useEffect(() => {
     fetchEmployees();
+    fetchBanks();
   }, []);
   useEffect(() => {
     if (searchQuery.trim() === '') {
@@ -140,6 +157,7 @@ const EmployeePage = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
+                  <TableHead>Username</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Base Salary</TableHead>
                   <TableHead>Status</TableHead>
@@ -172,6 +190,7 @@ const EmployeePage = () => {
                   filteredEmployees.map((employee) => (
                     <TableRow key={employee.employee_id}>
                       <TableCell className="font-medium">{employee.name}</TableCell>
+                      <TableCell>{employee.username}</TableCell>
                       <TableCell>{employee.email}</TableCell>
                       <TableCell>{formatCurrency(employee.base_salary)}</TableCell>
                       <TableCell>
@@ -217,6 +236,9 @@ const EmployeePage = () => {
             {filteredEmployees.length} of {employees.length} employees
           </div>
           <EmployeeFormDialog
+            bankProps={
+              banks
+            }
             open={isFormOpen}
             onOpenChange={setIsFormOpen}
             employee={selectedEmployee}

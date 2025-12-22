@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Camera, Clock, MapPin, Check, X, RefreshCw, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
+import { useGeolocated } from 'react-geolocated';
 
 import { attendanceApi, type TodayAttendanceStatus, type AttendanceRecord } from '@/services/attendance';
 import { AppSidebar } from '@/components/app-sidebar';
@@ -30,6 +31,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 
+
 const AttendancePage = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -41,14 +43,22 @@ const AttendancePage = () => {
   const [success, setSuccess] = useState('');
   const [showCamera, setShowCamera] = useState(false);
   const [checkType, setCheckType] = useState<'in' | 'out'>('in');
-  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  // Use react-geolocated hook
+  const { coords, isGeolocationAvailable, isGeolocationEnabled } =
+    useGeolocated({
+      positionOptions: {
+        enableHighAccuracy: true,
+      },
+      userDecisionTimeout: 10000,
+      watchPosition: false,
+    });
 
   // Load initial data
   useEffect(() => {
     loadTodayStatus();
     loadAttendanceHistory();
   }, []);
-
   // Cleanup camera on unmount
   useEffect(() => {
     return () => {
@@ -68,7 +78,6 @@ const AttendancePage = () => {
       console.error('Failed to load today status:', err);
     }
   };
-
   const loadAttendanceHistory = async () => {
     try {
       const response = await attendanceApi.getAttendanceHistories();
@@ -79,41 +88,21 @@ const AttendancePage = () => {
       console.error('Failed to load attendance history:', err);
     }
   };
-
-  const getGeolocation = (): Promise<{ latitude: number; longitude: number }> => {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error('Geolocation tidak didukung oleh browser Anda'));
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          resolve({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          });
-        },
-        (error) => {
-          reject(new Error('Gagal mendapatkan lokasi: ' + error.message));
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        }
-      );
-    });
-  };
-
   const startCamera = async () => {
     try {
       setError('');
       setSuccess('');
 
-      // Get location first
-      const coords = await getGeolocation();
-      setLocation(coords);
+      // Check geolocation availability
+      if (!isGeolocationAvailable) {
+        throw new Error('Geolocation tidak didukung oleh browser Anda');
+      }
+      if (!isGeolocationEnabled) {
+        throw new Error('Izin geolocation ditolak. Mohon aktifkan akses lokasi');
+      }
+      if (!coords) {
+        throw new Error('Sedang mengambil lokasi Anda...');
+      }
 
       // Get camera stream
       const mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -132,7 +121,8 @@ const AttendancePage = () => {
 
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
-        await videoRef.current.play();
+        // Let the video play automatically without calling play()
+        // to avoid "interrupted by new load request" error
       }
     } catch (err) {
       const error = err as Error;
@@ -141,7 +131,7 @@ const AttendancePage = () => {
   };
 
   const captureAndSubmit = async () => {
-    if (!videoRef.current || !canvasRef.current || !location) {
+    if (!videoRef.current || !canvasRef.current || !coords) {
       setError('Kamera atau lokasi belum siap');
       return;
     }
@@ -181,7 +171,7 @@ const AttendancePage = () => {
 
       // Submit check in/out
       if (checkType === 'in') {
-        const response = await attendanceApi.checkInFace(file, location.latitude, location.longitude);
+        const response = await attendanceApi.checkInFace(file, coords.latitude, coords.longitude);
         if (response.statusCode === 200 || response.statusCode === 201) {
           setSuccess('Check-in berhasil!');
           await loadTodayStatus();
@@ -191,7 +181,7 @@ const AttendancePage = () => {
           throw new Error(response.message || 'Check-in gagal');
         }
       } else {
-        const response = await attendanceApi.checkOutFace(file, location.latitude, location.longitude);
+        const response = await attendanceApi.checkOutFace(file, coords.latitude, coords.longitude);
         if (response.statusCode === 200 || response.statusCode === 201) {
           setSuccess('Check-out berhasil!');
           await loadTodayStatus();
@@ -215,7 +205,6 @@ const AttendancePage = () => {
       setStream(null);
     }
     setShowCamera(false);
-    setLocation(null);
   };
 
   const handleCheckIn = async () => {
@@ -237,7 +226,7 @@ const AttendancePage = () => {
     };
     return (
       <Badge variant={variants[status] || 'default'}>
-        {status.toUpperCase()}
+        {status?.toUpperCase()}
       </Badge>
     );
   };
@@ -381,22 +370,41 @@ const AttendancePage = () => {
                     ref={videoRef}
                     autoPlay
                     playsInline
+                    muted
                     className="w-full h-full object-cover"
                   />
                   <canvas ref={canvasRef} className="hidden" />
                 </div>
 
-                {location && (
+                {coords && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <MapPin className="h-4 w-4" />
-                    Lokasi: {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
+                    Lokasi: {coords.latitude.toFixed(6)}, {coords.longitude.toFixed(6)}
+                  </div>
+                )}
+                {!isGeolocationAvailable && (
+                  <div className="flex items-center gap-2 text-sm text-red-500">
+                    <MapPin className="h-4 w-4" />
+                    Geolocation tidak didukung browser Anda
+                  </div>
+                )}
+                {isGeolocationAvailable && !isGeolocationEnabled && (
+                  <div className="flex items-center gap-2 text-sm text-red-500">
+                    <MapPin className="h-4 w-4" />
+                    Izin lokasi ditolak. Mohon aktifkan akses lokasi
+                  </div>
+                )}
+                {isGeolocationAvailable && isGeolocationEnabled && !coords && (
+                  <div className="flex items-center gap-2 text-sm text-yellow-600">
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Mengambil lokasi Anda...
                   </div>
                 )}
 
                 <div className="flex gap-3">
                   <Button
                     onClick={captureAndSubmit}
-                    disabled={loading || !location}
+                    disabled={loading || !coords}
                     className="flex-1"
                     size="lg"
                   >
@@ -416,7 +424,6 @@ const AttendancePage = () => {
               </CardContent>
             </Card>
           )}
-
           {/* Attendance History */}
           <Card>
             <CardHeader>
@@ -448,7 +455,13 @@ const AttendancePage = () => {
                       attendanceHistory.map((record) => (
                         <TableRow key={record.attendance_id}>
                           <TableCell>
-                            {format(new Date(record.check_in_time), 'dd MMM yyyy')}
+                            {
+                              record.check_in_time ? (
+                                format(new Date(record.check_in_time), 'dd MMMM yyyy')
+                              ) : (
+                                "-"
+                              )
+                            }
                           </TableCell>
                           <TableCell>
                             {format(new Date(record.check_in_time), 'HH:mm:ss')}

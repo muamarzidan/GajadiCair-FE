@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/card';
 
 const MAX_ATTEMPTS = 3;
 const CAPTURE_COUNT = 20;
-const CAPTURE_DURATION = 3000; // 3 seconds
+const CAPTURE_DURATION = 15000;
 
 const FaceRegistrationPage = () => {
   const navigate = useNavigate();
@@ -27,7 +27,6 @@ const FaceRegistrationPage = () => {
   const [success, setSuccess] = useState(false);
 
   
-  // Security check: Only accessible from login flow
   useEffect(() => {
     if (!location.state?.fromLogin) {
       navigate('/', { replace: true });
@@ -43,7 +42,6 @@ const FaceRegistrationPage = () => {
     };
   }, [stream]);
 
-  // Start camera manually
   const startCamera = async () => {
     try {
       setError('');
@@ -119,22 +117,18 @@ const FaceRegistrationPage = () => {
       }
     }
   };
-
-  // Auto capture 20 photos in 3 seconds
   const startAutoCapture = async () => {
     setIsCapturing(true);
     setError('');
     const capturedFiles: File[] = [];
     const intervalMs = CAPTURE_DURATION / CAPTURE_COUNT;
 
-    // Countdown
-    for (let i = 3; i > 0; i--) {
+    for (let i = 15; i > 0; i--) {
       setCountdown(i);
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
     setCountdown(0);
 
-    // Capture frames
     for (let i = 0; i < CAPTURE_COUNT; i++) {
       const file = await captureFrame(i);
       if (file) {
@@ -145,19 +139,15 @@ const FaceRegistrationPage = () => {
       await new Promise(resolve => setTimeout(resolve, intervalMs));
     }
 
-    console.log(`Captured ${capturedFiles.length} out of ${CAPTURE_COUNT} photos`);
-
     setCapturedImages(capturedFiles);
     setIsCapturing(false);
 
-    // Process captured images - require at least 10 photos
-    if (capturedFiles.length >= 10) {
+    if (capturedFiles.length >= 20) {
       await processCaptures(capturedFiles);
     } else {
-      handleFailedAttempt(`Hanya berhasil mengambil ${capturedFiles.length} foto. Minimal 10 foto diperlukan.`);
+      handleFailedAttempt(`Hanya berhasil mengambil ${capturedFiles.length} foto. Minimal 20 foto diperlukan.`);
     }
   };
-
   const captureFrame = async (index: number): Promise<File | null> => {
     if (!videoRef.current || !canvasRef.current) {
       console.error('Video or canvas ref not available');
@@ -171,13 +161,11 @@ const FaceRegistrationPage = () => {
     if (!context) {
       console.error('Cannot get canvas context');
       return null;
-    }
-
-    // Check if video dimensions are valid
+    };
     if (!video.videoWidth || !video.videoHeight) {
       console.error('Video dimensions not ready:', video.videoWidth, video.videoHeight);
       return null;
-    }
+    };
 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -191,7 +179,6 @@ const FaceRegistrationPage = () => {
 
     return new File([blob], `face_${index}.jpg`, { type: 'image/jpeg' });
   };
-
   const processCaptures = async (files: File[]) => {
     if (files.length === 0) {
       handleFailedAttempt('Gagal mengambil foto. Silakan coba lagi.');
@@ -202,28 +189,23 @@ const FaceRegistrationPage = () => {
     setIsProcessing(true);
 
     try {
-      // Step 1: Check last photo
       const lastPhoto = files[files.length - 1];
-      console.log('Checking last photo:', lastPhoto.name, lastPhoto.size);
       const checkResponse = await faceRecognitionApi.checkFace(lastPhoto);
       console.log('Check face response:', checkResponse);
 
       if (checkResponse.statusCode === 200 && checkResponse.data.has_face === true && checkResponse.data.count === 1) {
-        // Step 2: Enroll all photos
         const enrollResponse = await faceRecognitionApi.enrollFace(files);
 
         if (enrollResponse.statusCode === 200 || enrollResponse.statusCode === 201) {
           setSuccess(true);
           
-          // Stop camera
           if (stream) {
             stream.getTracks().forEach(track => track.stop());
           }
 
-          // Redirect to dashboard
           setTimeout(() => {
             navigate('/dashboard', { replace: true });
-          }, 1500);
+          }, 2000);
         } else {
           handleFailedAttempt('Gagal menyimpan data wajah. Silakan coba lagi.');
         }
@@ -248,14 +230,11 @@ const FaceRegistrationPage = () => {
     setCameraStarted(false);
     setCountdown(3);
 
-    // Stop camera
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
       setStream(null);
     }
-
     if (newAttempts >= MAX_ATTEMPTS) {
-      // Max attempts reached - redirect to landing
       setTimeout(() => {
         navigate('/', { replace: true });
       }, 2000);
@@ -282,11 +261,11 @@ const FaceRegistrationPage = () => {
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <X className="h-8 w-8 text-red-600" />
           </div>
-          <h2 className="text-2xl font-bold text-red-700 mb-2">Gagal Verifikasi</h2>
+          <h2 className="text-2xl font-bold text-red-700 mb-2">Failed to Verify</h2>
           <p className="text-muted-foreground mb-4">
-            Anda telah mencapai batas maksimal percobaan ({MAX_ATTEMPTS}x). Coba lagi nanti.
+            You have reached the maximum number of attempts ({MAX_ATTEMPTS}x). Please try again later.
           </p>
-          <p className="text-sm text-muted-foreground">Mengalihkan ke halaman utama...</p>
+          <p className="text-sm text-muted-foreground">Redirecting to the landing page...</p>
         </Card>
       </div>
     );
@@ -321,7 +300,7 @@ const FaceRegistrationPage = () => {
                   <li>Hindari backlight (cahaya dari belakang)</li>
                   <li>Hanya 1 wajah yang terlihat di kamera</li>
                 </ul>
-                <p className="text-sm font-medium text-black mt-3">Sistem akan mengambil 20 foto secara otomatis dalam 3 detik.</p>
+                <p className="text-sm font-medium text-black mt-3">Sistem akan mengambil 20 foto secara otomatis dalam 10 detik.</p>
                 <p className="text-sm font-medium text-black">Jika sudah siap, tekan tombol "Buka Kamera" untuk memulai.</p>
               </div>
               {/* Action Button */}
