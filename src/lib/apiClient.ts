@@ -8,7 +8,7 @@ const baseURL = import.meta.env.MODE === 'development'
 
 const apiClient = axios.create({
   baseURL,
-  timeout: 5000,
+  timeout: 20000,
   headers: {
     'Content-Type': 'application/json',
   },

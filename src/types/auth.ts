@@ -1,6 +1,7 @@
 export interface BaseUser {
   email: string;
   name: string;
+  username?: string;
   avatar_uri: string | null;
   plan_expiration?: string | null;
   level_plan?: number;
@@ -16,6 +17,7 @@ export type User = CompanyUser | EmployeeUser;
 
 export interface CompanyUser extends BaseUser {
   company_id: string;
+  company_identifier: string;
   level_plan: number;
   plan_expiration: string | null;
   minimum_hours_per_day: number | null;
@@ -39,7 +41,9 @@ export interface CompanyLoginRequest {
 
 
 export interface EmployeeUser extends BaseUser {
+  username: string;
   employee_id: string;
+  company_identifier: string;
   company_id: string;
   is_active: boolean;
   base_salary: number;
@@ -54,8 +58,8 @@ export interface EmployeeLoginResponse {
   access_token: string;
 }
 export interface EmployeeLoginRequest {
-  company_id: string;
-  employee_id: string;
+  company_identifier: string;
+  username: string;
   password: string;
 }
 

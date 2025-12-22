@@ -8,23 +8,18 @@ import type {
 } from '@/types/attendance';
 
 export const attendanceApi = {
-  // Get attendance history
   getAttendanceHistories: async (): Promise<ApiResponse<AttendanceRecord[]>> => {
     const response = await apiClient.get<ApiResponse<AttendanceRecord[]>>(
       '/api/v1/employee/attendance/histories'
     );
     return response.data;
   },
-
-  // Get today's attendance status
   getTodayStatus: async (): Promise<ApiResponse<TodayAttendanceStatus>> => {
     const response = await apiClient.get<ApiResponse<TodayAttendanceStatus>>(
       '/api/v1/employee/attendance/today-status'
     );
     return response.data;
   },
-
-  // Check in with face recognition
   checkInFace: async (
     file: File,
     latitude: number,
@@ -46,8 +41,6 @@ export const attendanceApi = {
     );
     return response.data;
   },
-
-  // Check out with face recognition
   checkOutFace: async (
     file: File,
     latitude: number,

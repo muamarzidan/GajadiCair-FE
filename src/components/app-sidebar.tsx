@@ -17,7 +17,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { Button } from "./ui/button";
+import { Button } from  "./ui/button";
 
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -26,12 +26,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const companyInfo = {
     name: user?.name,
     plan: user?.level_plan,
+    company_identifier: user?.company_identifier,
+    level_plan: user && 'level_plan' in user ? user.level_plan : 1,
   };
   const userData = {
     name: user?.name || "User",
+    username: user?.username || "username",
     email: user?.email || "hacker@gmail.com", 
-    avatar: user?.avatar_uri || "/avatars/shadcn.jpg",
-    level_plan: user && 'level_plan' in user ? user.level_plan : 1,
+    avatar: user?.avatar_uri || "",
   };
   
   const navMain = React.useMemo(() => {
@@ -61,8 +63,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           },
         ],
       });
-    }
-    
+    };
     if (user?.role === 'company') {
       items.push({
         title: "Employee",
@@ -75,22 +76,47 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           },
         ],
       });
-    }
+    };
     
     return items;
   }, [user?.role]);
-  
+
+  console.log('Rendering AppSidebar with user:', user);
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <div className="grid flex-1 text-left text-sm leading-tight">
-          <span className="truncate text-xl font-bold">{companyInfo.name}</span>
-          <span className="truncate text-xs">{
-            companyInfo.plan === 1 ? 'Free' :
-            companyInfo.plan === 2 ? 'Basic' :
-            companyInfo.plan === 3 ? 'Pro ' :
-            'Free Plan'
-            }</span>
+        <div className="grid flex-1 text-left text-sm leading-tight gap-2">
+          {
+            user?.role === 'company' ? (
+              <span className="truncate text-xl font-bold">{companyInfo.name}</span>
+            ) : (
+              <span className="truncate text-xl font-bold">{userData.username}</span>
+            )
+          }
+          <div className="w-full flex items-center gap-3">
+            {
+              user?.role === 'company' ? (
+                <span className="truncate text-xs">{
+                  companyInfo.plan === 1 ? 'Free' :
+                  companyInfo.plan === 2 ? 'Basic' :
+                  companyInfo.plan === 3 ? 'Pro ' :
+                  'Free Plan'
+                  }
+                </span>
+              ) : null
+            }
+            {
+              user?.role === 'company' ? (
+                <>
+                  <div className="w-0.5 bg-black/40 h-full"></div>
+                  <span className="truncate">
+                    {companyInfo.company_identifier}
+                  </span>
+                </>
+              ) : null
+            }
+          </div>
         </div>
       </SidebarHeader>
       <hr />
@@ -98,15 +124,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <Link to="/upgrade" className="w-full">
-          <Button variant="pro" size="lg" className="!rounded-xl w-full text-white !p-10 text-xl font-bold mb-4">
-            <Sparkles className="h-8 w-8" />
-            <span>Upgrade Plan</span>
-          </Button>
-        </Link>
+        {
+          user?.role === 'company' && (
+            <Link to="/upgrade" className="w-full">
+              <Button variant="pro" size="lg" className="!rounded-xl w-full text-white !p-10 text-xl font-bold mb-4">
+                <Sparkles className="h-8 w-8" />
+                <span>Upgrade Plan</span>
+              </Button>
+            </Link>
+          )
+        }
         <NavUser user={userData} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  ) 
 };

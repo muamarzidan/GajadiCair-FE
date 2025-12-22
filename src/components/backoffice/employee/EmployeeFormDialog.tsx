@@ -8,13 +8,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { type Bank } from '@/types/bank';
 import { employeeApi, type Employee, type CreateEmployeeRequest, type UpdateEmployeeRequest } from '@/services/employee';
 
 interface EmployeeFormDialogProps {
+  bankProps: Bank[]; 
   open: boolean;
   onOpenChange: (open: boolean) => void;
   employee: Employee | null;
@@ -22,6 +33,7 @@ interface EmployeeFormDialogProps {
 }
 
 export const EmployeeFormDialog = ({
+  bankProps,
   open,
   onOpenChange,
   employee,
@@ -32,6 +44,7 @@ export const EmployeeFormDialog = ({
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
+    username: '',
     email: '',
     password: '',
     base_salary: '',
@@ -50,6 +63,7 @@ export const EmployeeFormDialog = ({
         // Edit mode - populate form
         setFormData({
           name: employee.name || '',
+          username: employee.username || '',
           email: employee.email || '',
           password: '',
           base_salary: employee.base_salary.toString() || '',
@@ -63,6 +77,7 @@ export const EmployeeFormDialog = ({
         // Add mode - reset form
         setFormData({
           name: '',
+          username: '',
           email: '',
           password: '',
           base_salary: '',
@@ -82,6 +97,10 @@ export const EmployeeFormDialog = ({
 
     if (!formData.name.trim()) {
       newErrors.name = 'Name is required';
+    }
+
+    if (!formData.username.trim()) {
+      newErrors.username = 'Username is required';
     }
 
     if (!formData.email.trim()) {
@@ -123,9 +142,9 @@ export const EmployeeFormDialog = ({
 
     try {
       if (isEdit && employee) {
-        // Update employee
         const updateData: UpdateEmployeeRequest = {
           name: formData.name,
+          username: formData.username,
           email: formData.email,
           base_salary: Number(formData.base_salary),
           bank_id: formData.bank_id,
@@ -146,9 +165,9 @@ export const EmployeeFormDialog = ({
           onOpenChange(false);
         }
       } else {
-        // Create employee
         const createData: CreateEmployeeRequest = {
           name: formData.name,
+          username: formData.username,
           email: formData.email,
           password: formData.password,
           base_salary: Number(formData.base_salary),
@@ -166,7 +185,7 @@ export const EmployeeFormDialog = ({
         }
       }
     } catch (error: any) {
-      console.error('❌ Failed to save employee:', error);
+      console.error('Failed to save employee:', error);
       const errorMessage = error.response?.data?.message || 'Failed to save employee';
       setErrors({ submit: errorMessage });
     } finally {
@@ -201,7 +220,20 @@ export const EmployeeFormDialog = ({
             />
             {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
           </div>
-
+          {/* Username */}
+          <div className="space-y-2">
+            <Label htmlFor="username">
+              Username <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="username"
+              placeholder="johndoe"
+              value={formData.username}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              disabled={isLoading}
+            />
+            {errors.username && <p className="text-sm text-red-500">{errors.username}</p>}
+          </div>
           {/* Email */}
           <div className="space-y-2">
             <Label htmlFor="email">
@@ -217,7 +249,6 @@ export const EmployeeFormDialog = ({
             />
             {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
           </div>
-
           {/* Password */}
           <div className="space-y-2">
             <Label htmlFor="password">
@@ -234,7 +265,6 @@ export const EmployeeFormDialog = ({
             />
             {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
           </div>
-
           {/* Base Salary */}
           <div className="space-y-2">
             <Label htmlFor="base_salary">
@@ -250,19 +280,32 @@ export const EmployeeFormDialog = ({
             />
             {errors.base_salary && <p className="text-sm text-red-500">{errors.base_salary}</p>}
           </div>
-
-          {/* Bank ID */}
+          {/* Bank Id with select  */}
           <div className="space-y-2">
             <Label htmlFor="bank_id">
               Bank ID <span className="text-red-500">*</span>
             </Label>
-            <Input
-              id="bank_id"
-              placeholder="bank-code"
+            <Select
               value={formData.bank_id}
-              onChange={(e) => setFormData({ ...formData, bank_id: e.target.value })}
+              onValueChange={(value) => setFormData({ ...formData, bank_id: value })}
               disabled={isLoading}
-            />
+            >
+              <SelectTrigger className="w-fit">
+                <SelectValue placeholder="Select a bank" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>List of bank</SelectLabel>
+                  {
+                    bankProps.map((bank) => (
+                      <SelectItem key={bank.bank_id} value={bank.bank_id}>
+                        {bank.name}
+                      </SelectItem>
+                    ))
+                  }
+                </SelectGroup>
+              </SelectContent>
+            </Select>
             {errors.bank_id && <p className="text-sm text-red-500">{errors.bank_id}</p>}
           </div>
 

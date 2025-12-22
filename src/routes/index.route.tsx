@@ -9,8 +9,8 @@ import RegisterPage from "@/pages/frontoffice/RegisterPage";
 import DashboardPage from "@/pages/backoffice/DashboardPage";
 import EmployeePage from "@/pages/backoffice/employees/EmployeePage";
 import UpgradePage from "@/pages/backoffice/UpgradePage";
-import AttendancePage from "@/pages/backoffice/AttendancePage";
-import FaceRegistrationPage from "@/pages/backoffice/FaceRegistrationPage";
+import AttendancePage from "@/pages/backoffice/attendance/AttendancePage";
+import FaceRegistrationPage from "@/pages/backoffice/enroll/FaceRegistrationPage";
 
 
 export const router = createBrowserRouter([
