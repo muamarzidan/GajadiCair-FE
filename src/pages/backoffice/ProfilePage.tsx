@@ -246,20 +246,22 @@ const ProfilePage = () => {
                       </AvatarFallback>
                     </Avatar>
                   </div>
-
                   {/* Name Input */}
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nama</Label>
-                    <Input
-                      id="name"
-                      type="text"
-                      placeholder="Masukkan nama"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                    />
-                  </div>
-
+                  {
+                    user?.role === 'company' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Nama</Label>
+                        <Input
+                          id="name"
+                          type="text"
+                          placeholder="Masukkan nama"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          required
+                        />
+                      </div>
+                    )
+                  }
                   {/* Profile Picture Input */}
                   <div className="space-y-2">
                     <Label htmlFor="profile_picture">Foto Profile</Label>
