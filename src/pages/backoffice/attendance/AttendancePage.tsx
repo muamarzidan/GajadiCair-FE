@@ -47,7 +47,6 @@ const AttendancePage = () => {
   const [checkInEligibility, setCheckInEligibility] = useState<any>(null);
   const [checkOutEligibility, setCheckOutEligibility] = useState<any>(null);
 
-  // Load initial data
   useEffect(() => {
     loadTodayStatus();
     loadAttendanceHistory();
@@ -58,7 +57,7 @@ const AttendancePage = () => {
     return () => {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
-      }
+      };
     };
   }, [stream]);
 
@@ -67,7 +66,7 @@ const AttendancePage = () => {
       const response = await attendanceApi.getTodayStatus();
       if (response.statusCode === 200) {
         setTodayStatus(response.data);
-      }
+      };
     } catch (err) {
       console.error('Failed to load today status:', err);
     }
@@ -77,12 +76,11 @@ const AttendancePage = () => {
       const response = await attendanceApi.getAttendanceHistories();
       if (response.statusCode === 200) {
         setAttendanceHistory(response.data);
-      }
+      };
     } catch (err) {
       console.error('Failed to load attendance history:', err);
     }
   };
-  
   const loadEligibility = async () => {
     try {
       const [checkInRes, checkOutRes] = await Promise.all([
@@ -106,15 +104,16 @@ const AttendancePage = () => {
       setSuccess('');
       setGeoError('');
 
-      // Check both permissions first
       if (!navigator.geolocation) {
         throw new Error('Geolocation tidak didukung oleh browser Anda');
+      }
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Media Devices API tidak didukung oleh browser Anda');
       }
 
       let locationPermission = 'unknown';
       let cameraPermission = 'unknown';
 
-      // Check location permission
       try {
         const locPerm = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
         locationPermission = locPerm.state;
@@ -122,7 +121,6 @@ const AttendancePage = () => {
         console.log('Cannot check location permission:', e);
       }
 
-      // Check camera permission
       try {
         const camPerm = await navigator.permissions.query({ name: 'camera' as PermissionName });
         cameraPermission = camPerm.state;
@@ -130,7 +128,6 @@ const AttendancePage = () => {
         console.log('Cannot check camera permission:', e);
       }
 
-      // If either is denied, show instructions
       const deniedPermissions = [];
       if (locationPermission === 'denied') {
         deniedPermissions.push('Lokasi');
@@ -142,15 +139,13 @@ const AttendancePage = () => {
       if (deniedPermissions.length > 0) {
         throw new Error(
           `Izin ${deniedPermissions.join(' dan ')} ditolak. Mohon aktifkan di pengaturan browser:\n\n` +
-          `1. Klik ikon gembok (🔒) di sebelah kiri address bar\n` +
+          `1. Klik ikon gembok di sebelah kiri address bar browser anda\n` +
           `2. Pilih "Site settings" atau "Pengaturan situs"\n` +
           `3. Ubah izin "Location" dan "Camera" menjadi "Allow"\n` +
           `4. Reload halaman dan coba lagi`
         );
       }
 
-      // Get current position - this will trigger browser permission prompt if needed
-      // Using more relaxed settings for better compatibility
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
           enableHighAccuracy: false, // Set false untuk lebih cepat
@@ -164,7 +159,6 @@ const AttendancePage = () => {
         longitude: position.coords.longitude,
       });
 
-      // Get camera stream
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 1280 },
@@ -185,11 +179,10 @@ const AttendancePage = () => {
         // to avoid "interrupted by new load request" error
       }
     } catch (err: any) {
-      // Handle geolocation errors
       if (err.code === 1 || err.message?.includes('ditolak')) {
         setError(
           'Izin Lokasi ditolak. Mohon aktifkan akses lokasi:\n\n' +
-          '1. Klik ikon gembok (🔒) di sebelah kiri address bar\n' +
+          '1. Klik ikon gembok di sebelah kiri address bar browser anda\n' +
           '2. Pilih "Site settings" atau "Pengaturan situs"\n' +
           '3. Ubah "Location" menjadi "Allow"\n' +
           '4. Reload halaman dan coba lagi'
@@ -201,7 +194,7 @@ const AttendancePage = () => {
       } else if (err.name === 'NotAllowedError' || err.message?.includes('Permission denied')) {
         setError(
           'Izin Kamera ditolak. Mohon aktifkan akses kamera:\n\n' +
-          '1. Klik ikon gembok (🔒) di sebelah kiri address bar\n' +
+          '1. Klik ikon gembok di sebelah kiri address bar browser anda\n' +
           '2. Pilih "Site settings" atau "Pengaturan situs"\n' +
           '3. Ubah "Camera" menjadi "Allow"\n' +
           '4. Reload halaman dan coba lagi'
@@ -231,10 +224,9 @@ const AttendancePage = () => {
         throw new Error('Canvas context tidak tersedia');
       }
 
-      // Check video dimensions
       if (!video.videoWidth || !video.videoHeight) {
         throw new Error('Video belum siap');
-      }
+      };
 
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
@@ -252,7 +244,6 @@ const AttendancePage = () => {
         type: 'image/jpeg',
       });
 
-      // Submit check in/out
       if (checkType === 'in') {
         const response = await attendanceApi.checkInFace(file, coords.latitude, coords.longitude);
         if (response.statusCode === 200 || response.statusCode === 201) {

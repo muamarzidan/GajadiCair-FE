@@ -69,7 +69,7 @@ export const authApi = {
   },
   
   loginWithGoogle: async (data: GoogleLoginRequest): Promise<ApiResponse<User>> => {
-    const response = await apiClient.post('/api/v1/auth/login/company/google', data);
+    const response = await apiClient.post('/api/v1/auth/company/login/google', data);
     return response.data;
   },
   
