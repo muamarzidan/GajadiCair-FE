@@ -118,14 +118,14 @@ const AttendancePage = () => {
         const locPerm = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
         locationPermission = locPerm.state;
       } catch (e) {
-        console.log('Cannot check location permission:', e);
+        console.error('Cannot check location permission:', e);
       }
 
       try {
         const camPerm = await navigator.permissions.query({ name: 'camera' as PermissionName });
         cameraPermission = camPerm.state;
       } catch (e) {
-        console.log('Cannot check camera permission:', e);
+        console.error('Cannot check camera permission:', e);
       }
 
       const deniedPermissions = [];

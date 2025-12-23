@@ -3,6 +3,7 @@ import { Check, X, Loader2 } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { subscriptionApi } from "@/services/subscription";
+import { getErrorMessage } from "@/utils";
 import { PLAN_CONFIGS } from "@/types/subscription";
 import { loadMidtransSnap, openMidtransSnap } from "@/lib/midtrans";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -62,26 +63,22 @@ const UpgradePage = () => {
       if (response.statusCode === 201 && response.data.token) {
         openMidtransSnap(response.data.token, {
           onSuccess: (result) => {
-            console.log('Payment success:', result);
             alert('Payment berhasil! Silakan refresh halaman.');
             setIsProcessing(false);
             setProcessingPlan(null);
             window.location.reload();
           },
           onPending: (result) => {
-            console.log('Payment pending:', result);
             alert('Pembayaran menunggu. Silakan selesaikan pembayaran Anda.');
             setIsProcessing(false);
             setProcessingPlan(null);
           },
           onError: (result) => {
-            console.error('Payment error:', result);
             alert('Pembayaran gagal. Silakan coba lagi.');
             setIsProcessing(false);
             setProcessingPlan(null);
           },
           onClose: () => {
-            console.log('Payment popup closed');
             setIsProcessing(false);
             setProcessingPlan(null);
           },
@@ -91,7 +88,7 @@ const UpgradePage = () => {
       }
     } catch (error: any) {
       console.error('Upgrade error:', error);
-      alert(error.response?.data?.message || error.message || 'Gagal membuat subscription');
+      alert(getErrorMessage(error, 'Gagal membuat subscription'));
       setIsProcessing(false);
       setProcessingPlan(null);
     }

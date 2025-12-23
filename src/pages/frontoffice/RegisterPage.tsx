@@ -82,7 +82,7 @@ const RegisterPage = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="name" className="block text-sm font-medium mb-2">
-              Nama Company 
+              Company Name 
             </label>
             <input
               id="name"
@@ -91,7 +91,7 @@ const RegisterPage = () => {
               value={formData.name}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="John Doe"
+              placeholder="Type your Company Name here"
               disabled={isLoading}
               required
             />
@@ -108,7 +108,7 @@ const RegisterPage = () => {
               value={formData.email}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="email@example.com"
+              placeholder="Type your Company Email here"
               disabled={isLoading}
               required
             />
@@ -126,7 +126,7 @@ const RegisterPage = () => {
                 value={formData.password}
                 onChange={handleChange}
                 className="w-full px-3 py-2 pr-10 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Minimal 8 karakter"
+                placeholder="Type your Password here"
                 disabled={isLoading}
                 required
               />
@@ -150,7 +150,7 @@ const RegisterPage = () => {
               value={formData.confirmPassword}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="Type password again"
+              placeholder="Type password again here"
               disabled={isLoading}
               required
             />

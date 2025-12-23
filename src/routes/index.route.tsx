@@ -13,6 +13,8 @@ import AttendancePage from "@/pages/backoffice/attendance/AttendancePage";
 import FaceRegistrationPage from "@/pages/backoffice/enroll/FaceRegistrationPage";
 import ProfilePage from "@/pages/backoffice/ProfilePage";
 import SettingsPage from "@/pages/backoffice/SettingsPage";
+import EmployeeLeaveApplicationPage from "@/pages/backoffice/leave/EmployeeLeaveApplicationPage";
+import CompanyLeaveApplicationPage from "@/pages/backoffice/leave/CompanyLeaveApplicationPage";
 
 
 export const router = createBrowserRouter([
@@ -107,6 +109,22 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute requiredRole="company">
         <SettingsPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/application",
+    element: (
+      <ProtectedRoute requiredRole="employee">
+        <EmployeeLeaveApplicationPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/application-management",
+    element: (
+      <ProtectedRoute requiredRole="company">
+        <CompanyLeaveApplicationPage />
       </ProtectedRoute>
     ),
   },

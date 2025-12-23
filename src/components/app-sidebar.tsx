@@ -5,6 +5,7 @@ import {
   SquareTerminal,
   Users,
   Calendar,
+  FileText,
 } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -63,6 +64,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           },
         ],
       });
+      items.push({
+        title: "Application",
+        url: "#",
+        icon: FileText,
+        items: [
+          {
+            title: "Application",
+            url: "/application",
+          },
+        ],
+      });
     };
     if (user?.role === 'company') {
       items.push({
@@ -73,6 +85,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           {
             title: "Overview",
             url: "/employee",
+          },
+        ],
+      });
+      items.push({
+        title: "Application",
+        url: "#",
+        icon: FileText,
+        items: [
+          {
+            title: "Overview",
+            url: "/application-management",
           },
         ],
       });

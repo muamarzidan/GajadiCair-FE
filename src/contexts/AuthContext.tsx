@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { authApi } from '@/services/auth';
+import { getErrorMessage } from '@/utils';
 import type { 
   User, 
   CompanyLoginRequest, 
@@ -18,8 +19,8 @@ interface AuthContextType {
   userRole: 'company' | 'employee' | null;
   loginAsCompany: (data: CompanyLoginRequest) => Promise<User>;
   loginAsEmployee: (data: EmployeeLoginRequest) => Promise<User>;
-  register: (data: RegisterRequest) => Promise<void>;
-  loginWithGoogle: (data: GoogleLoginRequest) => Promise<void>;
+  register: (data: RegisterRequest) => Promise<User>;
+  loginWithGoogle: (data: GoogleLoginRequest) => Promise<User>;
   logout: () => Promise<void>;
 };
 
@@ -90,7 +91,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         throw new Error(response.message || 'Login failed');
       }
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || error.message || 'Company login failed');
+      throw new Error(getErrorMessage(error, 'Company login failed'));
     } finally {
       setIsLoading(false);
     }
@@ -107,39 +108,41 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         throw new Error(response.message || 'Login failed');
       }
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || error.message || 'Employee login failed');
+      throw new Error(getErrorMessage(error, 'Employee login failed'));
     } finally {
       setIsLoading(false);
     }
   };
-  const register = async (data: RegisterRequest) => {
+  const register = async (data: RegisterRequest): Promise<User> => {
     try {
       setIsLoading(true);
       const response = await authApi.register(data);
       
       if (response.statusCode === 201 || response.statusCode === 200) {
         setUser(response.data);
+        return response.data;
       } else {
         throw new Error(response.message || 'Registration failed');
       }
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || error.message || 'Registration failed');
+      throw new Error(getErrorMessage(error, 'Registration failed'));
     } finally {
       setIsLoading(false);
     };
   };
-  const loginWithGoogle = async (data: GoogleLoginRequest) => {
+  const loginWithGoogle = async (data: GoogleLoginRequest): Promise<User> => {
     try {
       setIsLoading(true);
       const response = await authApi.loginWithGoogle(data);
       
       if (response.statusCode === 200) {
         setUser(response.data);
+        return response.data;
       } else {
         throw new Error(response.message);
       }
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Google login failed');
+      throw new Error(getErrorMessage(error, 'Google login failed'));
     } finally {
       setIsLoading(false);
     };

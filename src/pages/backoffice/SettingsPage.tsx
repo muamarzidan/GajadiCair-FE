@@ -43,7 +43,6 @@ const SettingsPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [settings, setSettings] = useState<AttendanceSettings | null>(null);
-
   // Form state
   const [minimumHoursPerDay, setMinimumHoursPerDay] = useState<number>(0);
   const [attendanceOpenTime, setAttendanceOpenTime] = useState('');
@@ -56,7 +55,7 @@ const SettingsPage = () => {
   const [latitude, setLatitude] = useState<number>(0);
   const [longitude, setLongitude] = useState<number>(0);
 
-  console.log('attendanceLocationEnabled:', settings);
+  console.log('attendanceOpenTime:',  settings)
 
   useEffect(() => {
     loadSettings();
