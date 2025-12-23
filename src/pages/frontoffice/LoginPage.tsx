@@ -101,11 +101,11 @@ const LoginPage = () => {
       </div>
       <Card className="p-6">
         <div className="flex gap-2 mb-6">
-          <button type="button" onClick={() => { setLoginMode('company'); setError(''); }} className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all ${loginMode === 'company' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}>
+          <button type="button" onClick={() => { setLoginMode('company'); setError(''); }} className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all cursor-pointer ${loginMode === 'company' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}>
             <Building2 className="h-4 w-4" />
             Company
           </button>
-          <button type="button" onClick={() => { setLoginMode('employee'); setError(''); }} className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all ${loginMode === 'employee' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}>
+          <button type="button" onClick={() => { setLoginMode('employee'); setError(''); }} className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all cursor-pointer ${loginMode === 'employee' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}>
             <Users className="h-4 w-4" />
             Employee
           </button>

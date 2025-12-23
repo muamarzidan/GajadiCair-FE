@@ -128,7 +128,7 @@ const EmployeePage = () => {
         </header>
         <div className="flex flex-1 flex-col gap-6 p-6">
           {/* Header */}
-          <div className="flex items-center flex-col gap-1 justify-start">
+          <div className="flex flex-col gap-1">
             <h1 className="text-3xl font-bold tracking-tight">Employees</h1>
             <p className="text-muted-foreground">
               Manage your company employees and their information

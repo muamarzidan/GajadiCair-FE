@@ -1,7 +1,7 @@
 import apiClient from '@/lib/apiClient';
 import type { ApiResponse } from '@/types/api';
 import type { 
-  User, 
+  // User, 
   CompanyUser,
   EmployeeUser,
   CompanyLoginRequest, 
@@ -63,14 +63,49 @@ export const authApi = {
     };
   },
   
-  register: async (data: RegisterRequest): Promise<ApiResponse<User>> => {
-    const response = await apiClient.post('/api/v1/auth/company/register', data);
-    return response.data;
+  register: async (data: RegisterRequest): Promise<ApiResponse<CompanyUser>> => {
+    const response = await apiClient.post<ApiResponse<CompanyLoginResponse>>(
+      '/api/v1/auth/company/register', 
+      data
+    );
+    
+    const { access_token, company } = response.data.data;
+    
+    if (access_token) {
+      localStorage.setItem('access_token-gjdc', access_token);
+      localStorage.setItem('company_credentials-gjdc', JSON.stringify({
+        email: data.email,
+        password: data.password,
+      }));
+    } else {
+      throw new Error('No access token received from server');
+    }
+    
+    return {
+      ...response.data,
+      data: { ...company, role: 'company' as const } as CompanyUser,
+    };
   },
   
-  loginWithGoogle: async (data: GoogleLoginRequest): Promise<ApiResponse<User>> => {
-    const response = await apiClient.post('/api/v1/auth/company/login/google', data);
-    return response.data;
+  loginWithGoogle: async (data: GoogleLoginRequest): Promise<ApiResponse<CompanyUser>> => {
+    const response = await apiClient.post<ApiResponse<CompanyLoginResponse>>(
+      '/api/v1/auth/company/login/google', 
+      data
+    );
+    
+    const { access_token, company } = response.data.data;
+    
+    if (access_token) {
+      localStorage.setItem('access_token-gjdc', access_token);
+      // Google login doesn't have password, so we don't store credentials
+    } else {
+      throw new Error('No access token received from server');
+    }
+    
+    return {
+      ...response.data,
+      data: { ...company, role: 'company' as const } as CompanyUser,
+    };
   },
   
   logout: async (): Promise<ApiResponse> => {
