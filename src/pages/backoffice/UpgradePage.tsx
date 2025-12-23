@@ -62,18 +62,18 @@ const UpgradePage = () => {
 
       if (response.statusCode === 201 && response.data.token) {
         openMidtransSnap(response.data.token, {
-          onSuccess: (result) => {
+          onSuccess: () => {
             alert('Payment berhasil! Silakan refresh halaman.');
             setIsProcessing(false);
             setProcessingPlan(null);
             window.location.reload();
           },
-          onPending: (result) => {
+          onPending: () => {
             alert('Pembayaran menunggu. Silakan selesaikan pembayaran Anda.');
             setIsProcessing(false);
             setProcessingPlan(null);
           },
-          onError: (result) => {
+          onError: () => {
             alert('Pembayaran gagal. Silakan coba lagi.');
             setIsProcessing(false);
             setProcessingPlan(null);

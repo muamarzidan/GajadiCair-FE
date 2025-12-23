@@ -1,7 +1,7 @@
 import apiClient from '@/lib/apiClient';
 import type { ApiResponse } from '@/types/api';
 import type { 
-  User, 
+  // User, 
   CompanyUser,
   EmployeeUser,
   CompanyLoginRequest, 

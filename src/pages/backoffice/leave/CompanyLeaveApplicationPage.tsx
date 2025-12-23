@@ -7,7 +7,6 @@ import type { LeaveApplication } from '@/types/leaveApplication';
 import { getImageUrl } from '@/utils';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Breadcrumb,
   BreadcrumbItem,

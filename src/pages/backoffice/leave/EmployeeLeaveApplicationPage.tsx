@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Plus, Check, X, Calendar, Clock, FileIcon } from 'lucide-react';
+import { Plus, Check, X, FileIcon } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { employeeLeaveApplicationApi } from '@/services/leaveApplication';
