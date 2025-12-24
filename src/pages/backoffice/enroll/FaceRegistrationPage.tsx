@@ -5,11 +5,12 @@ import { Camera, RefreshCw, Check, AlertCircle, X } from 'lucide-react';
 import { faceRecognitionApi } from '@/services/faceRecognition';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import face from "@/assets/images/face-recog-thumbnail.jpeg";
 
 
 const MAX_ATTEMPTS = 3;
-const CAPTURE_COUNT = 20;
-const CAPTURE_DURATION = 15000;
+const CAPTURE_COUNT = 50;
+const CAPTURE_DURATION = 50000;
 
 const FaceRegistrationPage = () => {
   const navigate = useNavigate();
@@ -114,7 +115,7 @@ const FaceRegistrationPage = () => {
     const capturedFiles: File[] = [];
     const intervalMs = CAPTURE_DURATION / CAPTURE_COUNT;
 
-    for (let i = 15; i > 0; i--) {
+    for (let i = 5; i > 0; i--) {
       setCountdown(i);
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
@@ -133,10 +134,10 @@ const FaceRegistrationPage = () => {
     setCapturedImages(capturedFiles);
     setIsCapturing(false);
 
-    if (capturedFiles.length >= 20) {
+    if (capturedFiles.length >= 50) {
       await processCaptures(capturedFiles);
     } else {
-      handleFailedAttempt(`Hanya berhasil mengambil ${capturedFiles.length} foto. Minimal 20 foto diperlukan.`);
+      handleFailedAttempt(`Hanya berhasil mengambil ${capturedFiles.length} foto. Minimal 50 foto diperlukan.`);
     }
   };
   const captureFrame = async (index: number): Promise<File | null> => {
@@ -289,7 +290,7 @@ const FaceRegistrationPage = () => {
                   <li>Hindari backlight (cahaya dari belakang)</li>
                   <li>Hanya 1 wajah yang terlihat di kamera</li>
                 </ul>
-                <p className="text-sm font-medium text-black mt-3">Sistem akan mengambil 20 foto secara otomatis dalam 10 detik.</p>
+                <p className="text-sm font-medium text-black mt-3">Sistem akan mengambil 50 foto secara otomatis dalam 50 detik.</p>
                 <p className="text-sm font-medium text-black">Jika sudah siap, tekan tombol "Buka Kamera" untuk memulai.</p>
               </div>
               {/* Action Button */}
@@ -313,6 +314,14 @@ const FaceRegistrationPage = () => {
                   playsInline
                   className="w-full h-full object-cover"
                 />
+                {/* Face Guide Overlay */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <img
+                    src={face}
+                    alt="Face guide"
+                    className="w-full h-full object-cover opacity-80"
+                  />
+                </div>
                 {/* Countdown Overlay */}
                 {countdown > 0 && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/10">

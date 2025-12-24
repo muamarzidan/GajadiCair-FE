@@ -85,8 +85,7 @@ const EmployeePage = () => {
       const query = searchQuery.toLowerCase();
       const filtered = employees.filter(
         (emp) =>
-          emp.name.toLowerCase().includes(query) ||
-          emp.employee_id.toLowerCase().includes(query)
+          emp.name.toLowerCase().includes(query)
       );
       setFilteredEmployees(filtered);
     };
@@ -140,7 +139,7 @@ const EmployeePage = () => {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search by name or ID..."
+                placeholder="Search by name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"

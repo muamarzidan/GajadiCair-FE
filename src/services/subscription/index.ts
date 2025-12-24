@@ -3,7 +3,9 @@ import type { ApiResponse } from '@/types/api';
 import type { 
   SubscriptionTransaction, 
   CreateSubscriptionRequest,
-  CreateSubscriptionResponse 
+  CreateSubscriptionResponse,
+  SubscriptionStatus,
+  CheckDowngradeResponse
 } from '@/types/subscription';
 
 
@@ -15,9 +17,24 @@ export const subscriptionApi = {
     );
     return response.data;
   },
+  
   getHistory: async (): Promise<ApiResponse<SubscriptionTransaction[]>> => {
     const response = await apiClient.get<ApiResponse<SubscriptionTransaction[]>>(
       '/api/v1/company/subscription'
+    );
+    return response.data;
+  },
+  
+  getStatus: async (): Promise<ApiResponse<SubscriptionStatus>> => {
+    const response = await apiClient.get<ApiResponse<SubscriptionStatus>>(
+      '/api/v1/company/subscription/status'
+    );
+    return response.data;
+  },
+  
+  checkDowngrade: async (): Promise<ApiResponse<CheckDowngradeResponse>> => {
+    const response = await apiClient.get<ApiResponse<CheckDowngradeResponse>>(
+      '/api/v1/company/subscription/check-downgrade'
     );
     return response.data;
   },

@@ -1,5 +1,5 @@
 import { useEffect,  useState } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Circle, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -14,7 +14,23 @@ L.Icon.Default.mergeOptions({
 interface MapPickerProps {
   latitude: number;
   longitude: number;
+  radius?: number; // Radius in meters
   onLocationChange: (lat: number, lng: number) => void;
+}
+
+// Component to update map center when props change
+function MapUpdater({ center }: { center: [number, number] }) {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (center[0] && center[1]) {
+      map.flyTo(center, 15, {
+        duration: 1.5
+      });
+    }
+  }, [center, map]);
+  
+  return null;
 }
 
 // Component to handle map clicks
@@ -39,7 +55,7 @@ function LocationMarker({ onLocationChange }: { onLocationChange: (lat: number, 
   }} />;
 }
 
-export const MapPicker = ({ latitude, longitude, onLocationChange }: MapPickerProps) => {
+export const MapPicker = ({ latitude, longitude, radius = 100, onLocationChange }: MapPickerProps) => {
   const [center, setCenter] = useState<[number, number]>([latitude || -6.2088, longitude || 106.8456]);
 
   useEffect(() => {
@@ -60,14 +76,27 @@ export const MapPicker = ({ latitude, longitude, onLocationChange }: MapPickerPr
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        <MapUpdater center={center} />
         {latitude && longitude && (
-          <Marker position={[latitude, longitude]} draggable={true} eventHandlers={{
-            dragend: (e) => {
-              const marker = e.target;
-              const pos = marker.getLatLng();
-              onLocationChange(pos.lat, pos.lng);
-            },
-          }} />
+          <>
+            <Marker position={[latitude, longitude]} draggable={true} eventHandlers={{
+              dragend: (e) => {
+                const marker = e.target;
+                const pos = marker.getLatLng();
+                onLocationChange(pos.lat, pos.lng);
+              },
+            }} />
+            <Circle
+              center={[latitude, longitude]}
+              radius={radius}
+              pathOptions={{
+                color: '#3b82f6',
+                fillColor: '#3b82f6',
+                fillOpacity: 0.2,
+                weight: 2,
+              }}
+            />
+          </>
         )}
         <LocationMarker onLocationChange={onLocationChange} />
       </MapContainer>

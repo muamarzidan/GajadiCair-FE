@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Settings as Check, X, MapPin, Clock } from 'lucide-react';
+import { Settings as Check, X, MapPin, Clock, Calendar, Navigation } from 'lucide-react';
 
+import { useIsMobile } from '@/hooks/use-mobile';
 import { attendanceSettingsApi } from '@/services/settings';
-import type { AttendanceSettings } from '@/types/settings';
+import { workingDayApi } from '@/services/workingDay';
+import { getErrorMessage } from '@/utils';
+import type { WorkingDay } from '@/types/workingDay';
 import { MapPicker } from '@/components/shared/MapPicker';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Button } from '@/components/ui/button';
@@ -26,6 +29,8 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 
 const SettingsPage = () => {
+  const isMobile = useIsMobile();
+  
   // Helper function to extract time from ISO datetime or return empty string
   const extractTimeFromISO = (isoString: string | null): string => {
     if (!isoString) return '';
@@ -40,9 +45,9 @@ const SettingsPage = () => {
   };
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
+  const [loadingLocation, setLoadingLocation] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [settings, setSettings] = useState<AttendanceSettings | null>(null);
   // Form state
   const [minimumHoursPerDay, setMinimumHoursPerDay] = useState<number>(0);
   const [attendanceOpenTime, setAttendanceOpenTime] = useState('');
@@ -54,19 +59,37 @@ const SettingsPage = () => {
   const [attendanceRadiusMeters, setAttendanceRadiusMeters] = useState<number>(0);
   const [latitude, setLatitude] = useState<number>(0);
   const [longitude, setLongitude] = useState<number>(0);
-
-  console.log('attendanceOpenTime:',  settings)
+  // Working day state
+  const [workingDay, setWorkingDay] = useState<WorkingDay>({
+    monday: true,
+    tuesday: true,
+    wednesday: true,
+    thursday: true,
+    friday: true,
+    saturday: false,
+    sunday: false,
+  });
 
   useEffect(() => {
     loadSettings();
   }, []);
 
+  // Auto-hide success message after 5 seconds
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess('');
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
   const loadSettings = async () => {
     try {
       setFetchLoading(true);
+      // Load attendance settings
       const response = await attendanceSettingsApi.getSettings();
       if (response.statusCode === 200) {
-        setSettings(response.data);
         // Populate form with existing data
         setMinimumHoursPerDay(response.data.minimum_hours_per_day || 0);
         setAttendanceOpenTime(extractTimeFromISO(response.data.attendance_open_time));
@@ -78,12 +101,70 @@ const SettingsPage = () => {
         setLatitude(response.data.attendance_location.latitude || 0);
         setLongitude(response.data.attendance_location.longitude || 0);
       }
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Gagal memuat settings';
-      setError(errorMessage);
+
+      // Load working day settings
+      const workingDayResponse = await workingDayApi.getWorkingDay();
+      if (workingDayResponse.statusCode === 200) {
+        setWorkingDay(workingDayResponse.data);
+      }
+    } catch (err) {
+      setError(getErrorMessage(err, 'Gagal memuat settings'));
     } finally {
       setFetchLoading(false);
     }
+  };
+
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setError('Geolocation tidak didukung oleh browser Anda');
+      return;
+    }
+
+    setLoadingLocation(true);
+    setError('');
+    setSuccess('');
+
+    // Use high accuracy for better precision
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude: lat, longitude: lng, accuracy } = position.coords;
+        setLatitude(lat);
+        setLongitude(lng);
+        
+        // Warn if accuracy is too low
+        if (accuracy > 1000) {
+          setSuccess(`Lokasi didapatkan dengan akurasi rendah (±${accuracy.toFixed(0)}m). Untuk hasil terbaik, aktifkan GPS dan coba lagi di area terbuka.`);
+        } else if (accuracy > 100) {
+          setSuccess(`Lokasi berhasil didapatkan! (Akurasi: ±${accuracy.toFixed(0)}m)`);
+        } else {
+          setSuccess(`Lokasi berhasil didapatkan dengan akurasi tinggi! (±${accuracy.toFixed(0)}m)`);
+        }
+        
+        setLoadingLocation(false);
+      },
+      (error) => {
+        let errorMessage = 'Gagal mendapatkan lokasi';
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = 'Izin lokasi ditolak. Mohon klik "Allow" pada popup permission browser.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = 'Lokasi tidak tersedia. Aktifkan GPS/Location Services di device Anda.';
+            break;
+          case error.TIMEOUT:
+            errorMessage = 'Timeout mendapatkan lokasi. Coba lagi atau pindah ke area dengan sinyal GPS lebih baik.';
+            break;
+        }
+        setError(errorMessage);
+        setLoadingLocation(false);
+        console.error('Geolocation error:', error);
+      },
+      {
+        enableHighAccuracy: true,   // Use GPS for better accuracy
+        timeout: 15000,             // 15 detik timeout - balance antara speed dan accuracy
+        maximumAge: 0,              // Always get fresh location
+      }
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -92,8 +173,31 @@ const SettingsPage = () => {
     setError('');
     setSuccess('');
 
+    // Validasi input
+    if (minimumHoursPerDay < 0) {
+      setError('Minimum jam kerja tidak boleh negatif');
+      setLoading(false);
+      return;
+    }
+    if (attendanceToleranceMinutes < 0) {
+      setError('Toleransi keterlambatan tidak boleh negatif');
+      setLoading(false);
+      return;
+    }
+    if (payrollDayOfMonth < 1 || payrollDayOfMonth > 31) {
+      setError('Tanggal gajian harus antara 1-31');
+      setLoading(false);
+      return;
+    }
+    if (attendanceRadiusMeters < 0) {
+      setError('Radius absensi tidak boleh negatif');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const data = {
+      // Update attendance settings
+      const attendanceData = {
         minimum_hours_per_day: minimumHoursPerDay,
         attendance_open_time: attendanceOpenTime,
         attendance_close_time: attendanceCloseTime,
@@ -106,30 +210,21 @@ const SettingsPage = () => {
         longitude: longitude,
       };
 
-      const response = await attendanceSettingsApi.updateSettings(data);
-      if (response.statusCode === 200) {
-        setSuccess('Settings berhasil diupdate!');
-        await loadSettings();
-      } else {
-        throw new Error(response.message || 'Gagal update settings');
+      const response = await attendanceSettingsApi.updateSettings(attendanceData);
+      if (response.statusCode !== 200) {
+        throw new Error(response.message || 'Gagal update attendance settings');
       }
-    } catch (err: any) {
-      let errorMessage = err.response?.data?.message || err.message || 'Terjadi kesalahan saat update settings';
-      
-      // Check for validation errors
-      const validationErrors = err.response?.data?.errors?.validationErrors;
-      if (validationErrors && Array.isArray(validationErrors)) {
-        const errorMessages = validationErrors
-          .map((error: any) => {
-            const field = error.field;
-            const messages = error.messages?.join(', ') || '';
-            return `${field}: ${messages}`;
-          })
-          .join(' | ');
-        errorMessage = errorMessages || errorMessage;
+
+      // Update working day
+      const workingDayResponse = await workingDayApi.updateWorkingDay(workingDay);
+      if (workingDayResponse.statusCode !== 200) {
+        throw new Error(workingDayResponse.message || 'Gagal update working day');
       }
-      
-      setError(errorMessage);
+
+      setSuccess('Settings berhasil diupdate!');
+      await loadSettings();
+    } catch (err) {
+      setError(getErrorMessage(err, 'Terjadi kesalahan saat update settings'));
     } finally {
       setLoading(false);
     }
@@ -179,7 +274,7 @@ const SettingsPage = () => {
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Company Settings</h1>
               <p className="text-muted-foreground">
-                Kelola pengaturan absensi dan penggajian perusahaan Anda
+                Manage your company's attendance and payroll settings
               </p>
             </div>
           </div>
@@ -222,7 +317,8 @@ const SettingsPage = () => {
                       step="0.5"
                       placeholder="Contoh: 8"
                       value={minimumHoursPerDay}
-                      onChange={(e) => setMinimumHoursPerDay(Number(e.target.value))}
+                      onChange={(e) => setMinimumHoursPerDay(Math.max(0, Number(e.target.value)))}
+                      required
                     />
                     <p className="text-xs text-muted-foreground">
                       Dalam satuan jam (contoh: 8 untuk 8 jam)
@@ -271,11 +367,12 @@ const SettingsPage = () => {
                       min="0"
                       placeholder="Contoh: 15"
                       value={attendanceToleranceMinutes}
-                      onChange={(e) => setAttendanceToleranceMinutes(Number(e.target.value))}
+                      onChange={(e) => setAttendanceToleranceMinutes(Math.max(0, Number(e.target.value)))}
+                      required
                     />
-                    <p className="text-xs text-muted-foreground">
+                    {/* <p className="text-xs text-muted-foreground">
                       Dalam satuan menit (contoh: 15 untuk 15 menit)
-                    </p>
+                    </p> */}
                   </div>
 
                   {/* Payroll Day */}
@@ -288,11 +385,15 @@ const SettingsPage = () => {
                       max="31"
                       placeholder="Contoh: 25"
                       value={payrollDayOfMonth}
-                      onChange={(e) => setPayrollDayOfMonth(Number(e.target.value))}
+                      onChange={(e) => {
+                        const value = Number(e.target.value);
+                        setPayrollDayOfMonth(Math.min(31, Math.max(1, value)));
+                      }}
+                      required
                     />
-                    <p className="text-xs text-muted-foreground">
+                    {/* <p className="text-xs text-muted-foreground">
                       Tanggal penggajian setiap bulan
-                    </p>
+                    </p> */}
                   </div>
                 </CardContent>
               </Card>
@@ -335,19 +436,17 @@ const SettingsPage = () => {
                           min="0"
                           placeholder="Contoh: 200"
                           value={attendanceRadiusMeters}
-                          onChange={(e) => setAttendanceRadiusMeters(Number(e.target.value))}
+                          onChange={(e) => setAttendanceRadiusMeters(Math.max(0, Number(e.target.value)))}
+                          required
                         />
-                        <p className="text-xs text-muted-foreground">
-                          Jarak maksimal dari lokasi kantor dalam meter
-                        </p>
                       </div>
-
                       {/* Map Picker */}
                       <div className="space-y-2">
                         <Label>Pilih Lokasi Kantor di Peta</Label>
                         <MapPicker
                           latitude={latitude}
                           longitude={longitude}
+                          radius={attendanceRadiusMeters}
                           onLocationChange={(lat, lng) => {
                             setLatitude(lat);
                             setLongitude(lng);
@@ -361,9 +460,159 @@ const SettingsPage = () => {
                             <span className="font-medium">Longitude:</span> {longitude.toFixed(7)}
                           </div>
                         </div>
+                        {isMobile && (
+                          <>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={getCurrentLocation}
+                              disabled={loadingLocation}
+                              className="w-full mt-2 gap-2"
+                            >
+                              <Navigation className={`h-4 w-4 ${loadingLocation ? 'animate-spin' : ''}`} />
+                              {loadingLocation ? 'Mendapatkan Lokasi...' : 'Presisikan lokasi saya'}
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </>
                   )}
+                </CardContent>
+              </Card>
+
+              {/* Working Day Settings */}
+              <Card className="md:col-span-1 lg:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    Hari Kerja
+                  </CardTitle>
+                  <CardDescription>
+                    Pilih hari kerja aktif untuk karyawan
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+                    {/* Monday */}
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="monday"
+                        checked={workingDay.monday}
+                        onCheckedChange={(checked) =>
+                          setWorkingDay({ ...workingDay, monday: checked as boolean })
+                        }
+                      />
+                      <Label
+                        htmlFor="monday"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        Senin
+                      </Label>
+                    </div>
+
+                    {/* Tuesday */}
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="tuesday"
+                        checked={workingDay.tuesday}
+                        onCheckedChange={(checked) =>
+                          setWorkingDay({ ...workingDay, tuesday: checked as boolean })
+                        }
+                      />
+                      <Label
+                        htmlFor="tuesday"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        Selasa
+                      </Label>
+                    </div>
+
+                    {/* Wednesday */}
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="wednesday"
+                        checked={workingDay.wednesday}
+                        onCheckedChange={(checked) =>
+                          setWorkingDay({ ...workingDay, wednesday: checked as boolean })
+                        }
+                      />
+                      <Label
+                        htmlFor="wednesday"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        Rabu
+                      </Label>
+                    </div>
+
+                    {/* Thursday */}
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="thursday"
+                        checked={workingDay.thursday}
+                        onCheckedChange={(checked) =>
+                          setWorkingDay({ ...workingDay, thursday: checked as boolean })
+                        }
+                      />
+                      <Label
+                        htmlFor="thursday"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        Kamis
+                      </Label>
+                    </div>
+
+                    {/* Friday */}
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="friday"
+                        checked={workingDay.friday}
+                        onCheckedChange={(checked) =>
+                          setWorkingDay({ ...workingDay, friday: checked as boolean })
+                        }
+                      />
+                      <Label
+                        htmlFor="friday"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        Jumat
+                      </Label>
+                    </div>
+
+                    {/* Saturday */}
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="saturday"
+                        checked={workingDay.saturday}
+                        onCheckedChange={(checked) =>
+                          setWorkingDay({ ...workingDay, saturday: checked as boolean })
+                        }
+                      />
+                      <Label
+                        htmlFor="saturday"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        Sabtu
+                      </Label>
+                    </div>
+
+                    {/* Sunday */}
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="sunday"
+                        checked={workingDay.sunday}
+                        onCheckedChange={(checked) =>
+                          setWorkingDay({ ...workingDay, sunday: checked as boolean })
+                        }
+                      />
+                      <Label
+                        htmlFor="sunday"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        Minggu
+                      </Label>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
