@@ -36,14 +36,30 @@ export const HolidayFormDialog = ({
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Convert ISO date string to YYYY-MM-DD format for HTML date input
+  const formatDateForInput = (isoDateString: string): string => {
+    try {
+      const date = new Date(isoDateString);
+      // Add 7 hours for UTC+7 (WIB)
+      date.setHours(date.getHours() + 7);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return '';
+    }
+  };
+
   // Reset form when dialog opens/closes or employee changes
   useEffect(() => {
     if (open) {
       if (holiday) {
-        // Edit mode - populate form
+        // Edit mode - populate form with formatted dates
         setFormData({
-          start_date: holiday.start_date,
-          end_date: holiday.end_date,
+          start_date: formatDateForInput(holiday.start_date),
+          end_date: formatDateForInput(holiday.end_date),
           description: holiday.description,
         });
       } else {
