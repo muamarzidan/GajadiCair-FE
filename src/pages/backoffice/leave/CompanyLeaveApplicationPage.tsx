@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Check, X, FileIcon, User } from 'lucide-react';
-import { format } from 'date-fns';
+import { Search, Filter, Loader2, FileText, CheckCircle, XCircle, Clock } from 'lucide-react';
 
 import { companyLeaveApplicationApi } from '@/services/leaveApplication';
 import type { LeaveApplication } from '@/types/leaveApplication';
-import { getImageUrl } from '@/utils';
+import { getErrorMessage, formatDate } from '@/utils';
 import { AppSidebar } from '@/components/app-sidebar';
-import { Button } from '@/components/ui/button';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -21,6 +19,8 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -30,97 +30,133 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
 
-const CompanyLeaveApplicationPage = () => {
+
+const ApplicationPage = () => {
   const [applications, setApplications] = useState<LeaveApplication[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
+  const [filteredApplications, setFilteredApplications] = useState<LeaveApplication[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState<string>('ALL');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  
-  // Dialog state
-  const [showDialog, setShowDialog] = useState(false);
-  const [selectedApp, setSelectedApp] = useState<LeaveApplication | null>(null);
-  const [dialogAction, setDialogAction] = useState<'approve' | 'reject'>('approve');
 
   useEffect(() => {
-    loadApplications();
+    fetchApplications();
   }, []);
 
-  const loadApplications = async () => {
+  useEffect(() => {
+    filterApplications();
+  }, [searchQuery, typeFilter, statusFilter, applications]);
+
+  const fetchApplications = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
+      setError('');
       const response = await companyLeaveApplicationApi.getLeaveApplications();
+      
       if (response.statusCode === 200) {
         setApplications(response.data);
+        setFilteredApplications(response.data);
       }
-    } catch (err: any) {
-      console.error('Failed to load applications:', err);
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to fetch leave applications'));
+      console.error('Failed to fetch applications:', err);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const handleAction = (app: LeaveApplication, action: 'approve' | 'reject') => {
-    setSelectedApp(app);
-    setDialogAction(action);
-    setShowDialog(true);
-  };
+  const filterApplications = () => {
+    let filtered = [...applications];
 
-  const confirmAction = async () => {
-    if (!selectedApp) return;
-
-    setActionLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      const data = {
-        employee_leave_application_id: selectedApp.employee_leave_application_id,
-        is_approve: dialogAction === 'approve',
-      };
-
-      const response = await companyLeaveApplicationApi.updateLeaveApplicationStatus(data);
-      if (response.statusCode === 200) {
-        setSuccess(`Pengajuan berhasil di${dialogAction === 'approve' ? 'setujui' : 'tolak'}!`);
-        setShowDialog(false);
-        await loadApplications();
-      } else {
-        throw new Error(response.message || 'Gagal memproses pengajuan');
-      }
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Terjadi kesalahan';
-      setError(errorMessage);
-    } finally {
-      setActionLoading(false);
+    // Search by employee name
+    if (searchQuery.trim() !== '') {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((app) =>
+        app.employee?.name.toLowerCase().includes(query)
+      );
     }
+
+    // Filter by type
+    if (typeFilter !== 'ALL') {
+      filtered = filtered.filter((app) => app.type === typeFilter);
+    }
+
+    // Filter by status
+    if (statusFilter !== 'ALL') {
+      filtered = filtered.filter((app) => app.status.toString() === statusFilter);
+    }
+
+    setFilteredApplications(filtered);
   };
 
-  const getStatusBadge = (status: 0 | 1 | 2) => {
-    const config = {
-      0: { label: 'Pending', variant: 'secondary' as const },
-      1: { label: 'Approved', variant: 'default' as const },
-      2: { label: 'Rejected', variant: 'destructive' as const },
-    };
-    const { label, variant } = config[status];
-    return <Badge variant={variant}>{label}</Badge>;
+  const getStatusBadge = (status: number) => {
+    switch (status) {
+      case 0:
+        return (
+          <Badge variant="outline" className="gap-1">
+            <Clock className="h-3 w-3" />
+            Pending
+          </Badge>
+        );
+      case 1:
+        return (
+          <Badge variant="default" className="gap-1 bg-green-600">
+            <CheckCircle className="h-3 w-3" />
+            Approved
+          </Badge>
+        );
+      case 2:
+        return (
+          <Badge variant="destructive" className="gap-1">
+            <XCircle className="h-3 w-3" />
+            Rejected
+          </Badge>
+        );
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
+    }
   };
 
   const getTypeBadge = (type: string) => {
     return (
-      <Badge variant={type === 'SICK' ? 'outline' : 'secondary'}>
+      <Badge variant={type === 'SICK' ? 'secondary' : 'default'}>
         {type}
       </Badge>
     );
+  };
+
+  const handleApprove = async (applicationId: string) => {
+    try {
+      await companyLeaveApplicationApi.updateLeaveApplicationStatus({
+        employee_leave_application_id: applicationId,
+        is_approve: true,
+      });
+      fetchApplications();
+    } catch (err) {
+      console.error('Failed to approve:', err);
+    }
+  };
+
+  const handleReject = async (applicationId: string) => {
+    try {
+      await companyLeaveApplicationApi.updateLeaveApplicationStatus({
+        employee_leave_application_id: applicationId,
+        is_approve: false,
+      });
+      fetchApplications();
+    } catch (err) {
+      console.error('Failed to reject:', err);
+    }
   };
 
   return (
@@ -138,7 +174,7 @@ const CompanyLeaveApplicationPage = () => {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Leave Management</BreadcrumbPage>
+                  <BreadcrumbPage>Leave Applications</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
@@ -147,168 +183,159 @@ const CompanyLeaveApplicationPage = () => {
 
         <div className="flex flex-1 flex-col gap-6 p-6">
           {/* Header */}
-          <div className="space-y-1">
-            <h1 className="text-3xl font-bold tracking-tight">Application Management</h1>
-            <p className="text-muted-foreground">    
-              Manage employee leave and sick leave applications
+          <div className="flex flex-col gap-1">
+            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+              <FileText className="h-8 w-8" />
+              Leave Applications
+            </h1>
+            <p className="text-muted-foreground">
+              Manage employee leave and sick applications
             </p>
           </div>
-          {/* Success Message */}
-          {success && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded-md flex items-center gap-2 text-green-700">
-              <Check className="h-4 w-4" />
-              <span className="text-sm">{success}</span>
-            </div>
-          )}
-          {/* Error Message */}
+
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-center gap-2 text-red-700">
-              <X className="h-4 w-4" />
-              <span className="text-sm">{error}</span>
-            </div>
+            <Card className="border-red-200 bg-red-50">
+              <CardContent className="pt-6">
+                <p className="text-sm text-red-700">{error}</p>
+              </CardContent>
+            </Card>
           )}
-          {/* Applications Table */}
+          {/* Search & Filters */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-8">
+            <div className="relative flex-1 w-full sm:max-w-sm">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search by employee name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="flex gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Types</SelectItem>
+                  <SelectItem value="SICK">Sick</SelectItem>
+                  <SelectItem value="LEAVE">Leave</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Status</SelectItem>
+                  <SelectItem value="0">Pending</SelectItem>
+                  <SelectItem value="1">Approved</SelectItem>
+                  <SelectItem value="2">Rejected</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Table */}
           <div className="rounded-md border">
-            {
-              loading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                  <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Karyawan</TableHead>
-                      <TableHead>Tipe</TableHead>
-                      <TableHead>Tanggal</TableHead>
-                      <TableHead>Alasan</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Lampiran</TableHead>
-                      <TableHead>Aksi</TableHead>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Employee</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Period</TableHead>
+                  <TableHead>Reason</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Applied Date</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-32 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Loading applications...</span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : filteredApplications.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-32 text-center">
+                      <div className="text-muted-foreground">
+                        {searchQuery || typeFilter !== 'ALL' || statusFilter !== 'ALL'
+                          ? 'No applications found matching your filters'
+                          : 'No applications yet'}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredApplications.map((app) => (
+                    <TableRow key={app.employee_leave_application_id}>
+                      <TableCell className="font-medium">
+                        {app.employee?.name || 'Unknown'}
+                      </TableCell>
+                      <TableCell>{getTypeBadge(app.type)}</TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div>{formatDate(app.start_date)}</div>
+                          <div className="text-muted-foreground">
+                            to {formatDate(app.end_date)}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">
+                        {app.reason}
+                      </TableCell>
+                      <TableCell>{getStatusBadge(app.status)}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {formatDate(app.created_at)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {app.status === 0 && (
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleApprove(app.employee_leave_application_id)}
+                              className="gap-1 text-green-600 hover:text-green-700 hover:bg-green-50"
+                            >
+                              <CheckCircle className="h-3 w-3" />
+                              Approve
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleReject(app.employee_leave_application_id)}
+                              className="gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <XCircle className="h-3 w-3" />
+                              Reject
+                            </Button>
+                          </div>
+                        )}
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {applications.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center text-muted-foreground">
-                          Belum ada pengajuan
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      applications.map((app) => (
-                        <TableRow key={app.employee_leave_application_id}>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Avatar className="h-8 w-8">
-                                <AvatarImage 
-                                  src={app.employee?.avatar_uri ? getImageUrl(app.employee.avatar_uri) : undefined}
-                                  alt={app.employee?.name || 'Employee'} 
-                                />
-                                <AvatarFallback>
-                                  <User className="h-4 w-4" />
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="font-medium">{app.employee?.name || 'N/A'}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>{getTypeBadge(app.type)}</TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            <div className="text-sm">
-                              {format(new Date(app.start_date), 'dd MMM yyyy')} <br />
-                              {format(new Date(app.end_date), 'dd MMM yyyy')}
-                            </div>
-                          </TableCell>
-                          <TableCell className="max-w-[250px] truncate">{app.reason}</TableCell>
-                          <TableCell>{getStatusBadge(app.status)}</TableCell>
-                          <TableCell>
-                            {app.attachment_uri && (
-                              <a
-                                href={getImageUrl(app.attachment_uri)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary hover:underline flex items-center gap-1"
-                              >
-                                <FileIcon className="h-4 w-4" />
-                                Lihat
-                              </a>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {app.status === 0 ? (
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="default"
-                                  onClick={() => handleAction(app, 'approve')}
-                                  className="bg-green-600 hover:bg-green-700"
-                                >
-                                  <Check className="h-4 w-4 mr-1" />
-                                  Setujui
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleAction(app, 'reject')}
-                                >
-                                  <X className="h-4 w-4 mr-1" />
-                                  Tolak
-                                </Button>
-                              </div>
-                            ) : (
-                              <span className="text-sm text-muted-foreground">-</span>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              )
-            }
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="text-sm text-muted-foreground">
+            Showing {filteredApplications.length} of {applications.length} applications
           </div>
         </div>
-
-        {/* Confirmation Dialog */}
-        <Dialog open={showDialog} onOpenChange={setShowDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {dialogAction === 'approve' ? 'Setujui' : 'Tolak'} Pengajuan
-              </DialogTitle>
-              <DialogDescription>
-                Apakah Anda yakin ingin {dialogAction === 'approve' ? 'menyetujui' : 'menolak'} pengajuan {selectedApp?.type} dari {selectedApp?.employee?.name}?
-              </DialogDescription>
-            </DialogHeader>
-            {selectedApp && (
-              <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <span className="text-muted-foreground">Tanggal:</span>
-                  <span>
-                    {format(new Date(selectedApp.start_date), 'dd MMM yyyy')} - {format(new Date(selectedApp.end_date), 'dd MMM yyyy')}
-                  </span>
-                  <span className="text-muted-foreground">Alasan:</span>
-                  <span>{selectedApp.reason}</span>
-                </div>
-              </div>
-            )}
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowDialog(false)} disabled={actionLoading}>
-                Batal
-              </Button>
-              <Button
-                variant={dialogAction === 'approve' ? 'default' : 'destructive'}
-                onClick={confirmAction}
-                disabled={actionLoading}
-              >
-                {actionLoading ? 'Memproses...' : dialogAction === 'approve' ? 'Setujui' : 'Tolak'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </SidebarInset>
     </SidebarProvider>
   );
 };
 
-export default CompanyLeaveApplicationPage;
+export default ApplicationPage;

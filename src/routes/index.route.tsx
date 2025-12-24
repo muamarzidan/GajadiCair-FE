@@ -9,12 +9,15 @@ import RegisterPage from "@/pages/frontoffice/RegisterPage";
 import DashboardPage from "@/pages/backoffice/DashboardPage";
 import EmployeePage from "@/pages/backoffice/employees/EmployeePage";
 import UpgradePage from "@/pages/backoffice/UpgradePage";
+import SubscriptionHistoryPage from "@/pages/backoffice/subscription/SubscriptionHistoryPage";
 import AttendancePage from "@/pages/backoffice/attendance/AttendancePage";
 import FaceRegistrationPage from "@/pages/backoffice/enroll/FaceRegistrationPage";
 import ProfilePage from "@/pages/backoffice/ProfilePage";
 import SettingsPage from "@/pages/backoffice/SettingsPage";
 import EmployeeLeaveApplicationPage from "@/pages/backoffice/leave/EmployeeLeaveApplicationPage";
 import CompanyLeaveApplicationPage from "@/pages/backoffice/leave/CompanyLeaveApplicationPage";
+import HolidayPage from "@/pages/backoffice/holiday/HolidayPage";
+import HolidayPreviewPage from "@/pages/backoffice/holiday/HolidayPreviewPage";
 
 
 export const router = createBrowserRouter([
@@ -85,6 +88,30 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute requiredRole="company">
         <UpgradePage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/subscription-history",
+    element: (
+      <ProtectedRoute requiredRole="company">
+        <SubscriptionHistoryPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/holiday",
+    element: (
+      <ProtectedRoute requiredRole="company">
+        <HolidayPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/holiday-preview",
+    element: (
+      <ProtectedRoute requiredRole="company">
+        <HolidayPreviewPage />
       </ProtectedRoute>
     ),
   },

@@ -30,6 +30,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 
 const UpgradePage = () => {
@@ -37,19 +45,154 @@ const UpgradePage = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingPlan, setProcessingPlan] = useState<number | null>(null);
   const [snapReady, setSnapReady] = useState(false);
+  const [canDowngrade, setCanDowngrade] = useState(true);
+  const [downgradeMessage, setDowngradeMessage] = useState('');
+  
+  // Dialog states
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogConfig, setDialogConfig] = useState<{
+    title: string;
+    description: string;
+    type: 'confirm' | 'success' | 'error' | 'warning';
+    onConfirm?: () => void;
+  }>({ title: '', description: '', type: 'success' });
 
-  const currentPlan = (user?.role === 'company' ? user.level_plan : 1) || 1;
+  const currentPlan = (user?.role === 'company' ? user.level_plan : 0) || 0;
   const MIDTRANS_CLIENT_KEY = import.meta.env.VITE_MIDTRANS_CLIENT_KEY;
 
   useEffect(() => {
     loadMidtransSnap(MIDTRANS_CLIENT_KEY)
       .then(() => setSnapReady(true))
       .catch((err) => console.error('Failed to load Midtrans:', err));
+    
+    // Check downgrade eligibility
+    checkDowngradeEligibility();
+    
+    // Handle Midtrans redirect callback
+    handleMidtransCallback();
   }, []);
+  
+  const handleMidtransCallback = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const transactionStatus = urlParams.get('transaction_status');
+    const orderId = urlParams.get('order_id');
+    
+    if (transactionStatus && orderId) {
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      // Show appropriate dialog based on transaction status
+      if (transactionStatus === 'settlement' || transactionStatus === 'capture') {
+        setDialogConfig({
+          title: 'Pembayaran Berhasil!',
+          description: 'Pembayaran Anda telah berhasil diproses. Halaman akan dimuat ulang.',
+          type: 'success',
+          onConfirm: () => window.location.reload()
+        });
+        setDialogOpen(true);
+      } else if (transactionStatus === 'pending') {
+        setDialogConfig({
+          title: 'Pembayaran Menunggu',
+          description: 'Pembayaran Anda sedang diproses. Silakan selesaikan pembayaran Anda.',
+          type: 'warning'
+        });
+        setDialogOpen(true);
+      } else if (transactionStatus === 'deny' || transactionStatus === 'expire' || transactionStatus === 'cancel') {
+        setDialogConfig({
+          title: 'Pembayaran Gagal',
+          description: 'Pembayaran tidak dapat diproses. Silakan coba lagi.',
+          type: 'error'
+        });
+        setDialogOpen(true);
+      }
+    }
+  };
+
+  const checkDowngradeEligibility = async () => {
+    try {
+      const response = await subscriptionApi.checkDowngrade();
+      if (response.statusCode === 200) {
+        setCanDowngrade(response.data.can_downgrade);
+        setDowngradeMessage(response.data.message);
+      }
+    } catch (err) {
+      console.error('Failed to check downgrade:', err);
+    }
+  };
 
   const handleUpgrade = async (levelPlan: number) => {
+    // Check if it's a downgrade
+    const isDowngrade = levelPlan < currentPlan;
+    
+    if (isDowngrade) {
+      if (!canDowngrade) {
+        setDialogConfig({
+          title: 'Tidak Dapat Downgrade',
+          description: downgradeMessage || 'Tidak dapat downgrade saat ini',
+          type: 'warning'
+        });
+        setDialogOpen(true);
+        return;
+      }
+      
+      // Confirm downgrade
+      setDialogConfig({
+        title: 'Konfirmasi Downgrade',
+        description: `Apakah Anda yakin ingin downgrade ke ${PLAN_CONFIGS[levelPlan].name}? Perubahan akan berlaku segera.`,
+        type: 'confirm',
+        onConfirm: () => executeUpgrade(levelPlan)
+      });
+      setDialogOpen(true);
+      return;
+    }
+    
+    // Execute upgrade directly for non-downgrade
+    executeUpgrade(levelPlan);
+  };
+  
+  const executeUpgrade = async (levelPlan: number) => {
+    
+    // Free plan (level 0) - downgrade without payment
+    if (levelPlan === 0) {
+      setIsProcessing(true);
+      setProcessingPlan(levelPlan);
+      
+      try {
+        const response = await subscriptionApi.createSubscription({ 
+          level_plan: levelPlan,
+          finish_redirect_url: window.location.origin + window.location.pathname
+        });
+        if (response.statusCode === 201) {
+          setDialogConfig({
+            title: 'Downgrade Berhasil!',
+            description: 'Downgrade ke FREE plan berhasil! Halaman akan dimuat ulang.',
+            type: 'success',
+            onConfirm: () => window.location.reload()
+          });
+          setDialogOpen(true);
+        }
+      } catch (error) {
+        setDialogConfig({
+          title: 'Downgrade Gagal',
+          description: getErrorMessage(error, 'Gagal downgrade subscription'),
+          type: 'error'
+        });
+        setDialogOpen(true);
+      } finally {
+        setIsProcessing(false);
+        setProcessingPlan(null);
+      }
+      return;
+    }
+    
+    // Paid plans - require payment for upgrades
     if (!snapReady) {
-      alert('Payment system is loading. Please wait...');
+      setDialogConfig({
+        title: 'Sistem Pembayaran Memuat',
+        description: 'Sistem pembayaran sedang dimuat. Silakan tunggu sebentar...',
+        type: 'warning'
+      });
+      setDialogOpen(true);
       return;
     }
 
@@ -57,38 +200,52 @@ const UpgradePage = () => {
     setProcessingPlan(levelPlan);
 
     try {
-      // Create subscription snap token
-      const response = await subscriptionApi.createSubscription({ level_plan: levelPlan });
+      // Create subscription snap token with finish redirect URL
+      const response = await subscriptionApi.createSubscription({ 
+        level_plan: levelPlan,
+        finish_redirect_url: window.location.origin + window.location.pathname
+      });
 
       if (response.statusCode === 201 && response.data.token) {
-        openMidtransSnap(response.data.token, {
+        // Prepare snap options with finish redirect URL
+        const snapOptions = {
           onSuccess: () => {
-            alert('Payment berhasil! Silakan refresh halaman.');
             setIsProcessing(false);
             setProcessingPlan(null);
-            window.location.reload();
+            // Dialog akan ditampilkan dari handleMidtransCallback setelah redirect
           },
           onPending: () => {
-            alert('Pembayaran menunggu. Silakan selesaikan pembayaran Anda.');
             setIsProcessing(false);
             setProcessingPlan(null);
           },
           onError: () => {
-            alert('Pembayaran gagal. Silakan coba lagi.');
             setIsProcessing(false);
             setProcessingPlan(null);
+            setDialogConfig({
+              title: 'Pembayaran Gagal',
+              description: 'Pembayaran gagal. Silakan coba lagi.',
+              type: 'error'
+            });
+            setDialogOpen(true);
           },
           onClose: () => {
             setIsProcessing(false);
             setProcessingPlan(null);
           },
-        });
+        };
+        
+        openMidtransSnap(response.data.token, snapOptions);
       } else {
         throw new Error(response.message || 'Failed to create subscription');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Upgrade error:', error);
-      alert(getErrorMessage(error, 'Gagal membuat subscription'));
+      setDialogConfig({
+        title: 'Gagal Membuat Subscription',
+        description: getErrorMessage(error, 'Gagal membuat subscription'),
+        type: 'error'
+      });
+      setDialogOpen(true);
       setIsProcessing(false);
       setProcessingPlan(null);
     }
@@ -98,11 +255,11 @@ const UpgradePage = () => {
     level: plan.level,
     name: plan.name,
     price: plan.priceLabel,
-    period: plan.level > 1 ? '/bulan' : '',
+    period: plan.level > 0 ? '/bulan' : '',
     description:
-      plan.level === 1
+      plan.level === 0
         ? 'Untuk startup dan tim kecil'
-        : plan.level === 2
+        : plan.level === 1
         ? 'Untuk perusahaan berkembang'
         : 'Untuk perusahaan besar',
     features: plan.features.map((feature) => ({ text: feature, included: true })),
@@ -111,12 +268,13 @@ const UpgradePage = () => {
         ? 'Current Plan'
         : plan.level < currentPlan
         ? 'Downgrade'
-        : plan.level === 2
+        : plan.level === 1
         ? 'Choose BASIC'
-        : plan.level === 3
+        : plan.level === 2
         ? 'Choose PRO'
         : 'Start Now',
     isCurrentPlan: plan.level === currentPlan,
+    isDowngrade: plan.level < currentPlan,
   }));
 
   return (
@@ -203,11 +361,16 @@ const UpgradePage = () => {
                 </CardContent>
                 <CardFooter>
                   <Button
-                    variant={tier.isCurrentPlan ? "outline" : "default"}
+                    variant={tier.isCurrentPlan ? "outline" : tier.isDowngrade ? "secondary" : "default"}
                     size="lg"
                     className="w-full !py-6"
-                    disabled={tier.isCurrentPlan || isProcessing}
+                    disabled={
+                      tier.isCurrentPlan || 
+                      isProcessing || 
+                      (tier.isDowngrade && !canDowngrade)
+                    }
                     onClick={() => handleUpgrade(tier.level)}
+                    title={tier.isDowngrade && !canDowngrade ? downgradeMessage : undefined}
                   >
                     {processingPlan === tier.level ? (
                       <>
@@ -223,6 +386,45 @@ const UpgradePage = () => {
             ))}
           </div>
         </div>
+        
+        {/* Dialog for all notifications */}
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{dialogConfig.title}</DialogTitle>
+              <DialogDescription>{dialogConfig.description}</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              {dialogConfig.type === 'confirm' ? (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => setDialogOpen(false)}
+                  >
+                    Batal
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setDialogOpen(false);
+                      dialogConfig.onConfirm?.();
+                    }}
+                  >
+                    Ya, Lanjutkan
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  onClick={() => {
+                    setDialogOpen(false);
+                    dialogConfig.onConfirm?.();
+                  }}
+                >
+                  OK
+                </Button>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </SidebarInset>
     </SidebarProvider>
   );

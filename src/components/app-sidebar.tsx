@@ -6,6 +6,8 @@ import {
   Users,
   Calendar,
   FileText,
+  Receipt,
+  TreePalm
 } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,7 +30,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     name: user?.name,
     plan: user?.level_plan,
     company_identifier: user?.company_identifier,
-    level_plan: user && 'level_plan' in user ? user.level_plan : 1,
+    level_plan: user && 'level_plan' in user ? user.level_plan : 0,
   };
   const userData = {
     name: user?.name || "User",
@@ -70,7 +72,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: FileText,
         items: [
           {
-            title: "Application",
+            title: "My Application",
             url: "/application",
           },
         ],
@@ -98,7 +100,33 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             url: "/application-management",
           },
         ],
-      });
+      });      
+      items.push({
+        title: "Subscription",
+        url: "#",
+        icon: Receipt,
+        items: [
+          {
+            title: "History",
+            url: "/subscription-history",
+          },
+        ],
+      }); 
+      items.push({
+        title: "Holiday",
+        url: "#",
+        icon: TreePalm,
+        items: [
+          {
+            title: "Overview",
+            url: "/holiday-preview",
+          },
+          {
+            title: "Manage Holidays",
+            url: "/holiday",
+          },
+        ],
+      });   
     };
     
     return items;
@@ -119,9 +147,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             {
               user?.role === 'company' ? (
                 <span className="truncate text-xs">{
-                  companyInfo.plan === 1 ? 'Free' :
-                  companyInfo.plan === 2 ? 'Basic' :
-                  companyInfo.plan === 3 ? 'Pro ' :
+                  companyInfo.plan === 0 ? 'Free' :
+                  companyInfo.plan === 1 ? 'Basic' :
+                  companyInfo.plan === 2 ? 'Pro' :
                   'Free Plan'
                   }
                 </span>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Check, X, FileIcon } from 'lucide-react';
+import { Plus, Check, X, FileIcon, Filter } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { employeeLeaveApplicationApi } from '@/services/leaveApplication';
@@ -7,7 +7,6 @@ import type { LeaveApplication } from '@/types/leaveApplication';
 import { getImageUrl } from '@/utils';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -52,11 +51,18 @@ import { Textarea } from '@/components/ui/textarea';
 
 const EmployeeLeaveApplicationPage = () => {
   const [applications, setApplications] = useState<LeaveApplication[]>([]);
+  const [filteredApplications, setFilteredApplications] = useState<LeaveApplication[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showDialog, setShowDialog] = useState(false);
+  
+  // Filter states
+  const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterEndDate, setFilterEndDate] = useState('');
+  const [filterType, setFilterType] = useState<string>('ALL');
+  const [filterStatus, setFilterStatus] = useState<string>('ALL');
 
   // Form state
   const [startDate, setStartDate] = useState('');
@@ -69,12 +75,51 @@ const EmployeeLeaveApplicationPage = () => {
     loadApplications();
   }, []);
 
+  useEffect(() => {
+    filterApplications();
+  }, [filterStartDate, filterEndDate, filterType, filterStatus, applications]);
+
+  const filterApplications = () => {
+    let filtered = [...applications];
+
+    // Filter by date range
+    if (filterStartDate) {
+      filtered = filtered.filter((app) => {
+        const appDate = new Date(app.start_date);
+        const filterDate = new Date(filterStartDate);
+        return appDate >= filterDate;
+      });
+    }
+
+    if (filterEndDate) {
+      filtered = filtered.filter((app) => {
+        const appDate = new Date(app.end_date);
+        const filterDate = new Date(filterEndDate);
+        filterDate.setHours(23, 59, 59, 999);
+        return appDate <= filterDate;
+      });
+    }
+
+    // Filter by type
+    if (filterType !== 'ALL') {
+      filtered = filtered.filter((app) => app.type === filterType);
+    }
+
+    // Filter by status
+    if (filterStatus !== 'ALL') {
+      filtered = filtered.filter((app) => app.status.toString() === filterStatus);
+    }
+
+    setFilteredApplications(filtered);
+  };
+
   const loadApplications = async () => {
     try {
       setFetchLoading(true);
       const response = await employeeLeaveApplicationApi.getLeaveApplications();
       if (response.statusCode === 200) {
         setApplications(response.data);
+        setFilteredApplications(response.data);
       }
     } catch (err: any) {
       console.error('Failed to load applications:', err);
@@ -138,7 +183,20 @@ const EmployeeLeaveApplicationPage = () => {
         throw new Error(response.message || 'Gagal mengirim pengajuan');
       }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Terjadi kesalahan saat mengirim pengajuan';
+      let errorMessage = 'Terjadi kesalahan saat mengirim pengajuan';
+      
+      // Check for validation errors
+      if (err.response?.data?.errors?.validationErrors) {
+        const validationErrors = err.response.data.errors.validationErrors;
+        errorMessage = validationErrors
+          .map((ve: any) => ve.messages.join(', '))
+          .join('; ');
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -199,7 +257,7 @@ const EmployeeLeaveApplicationPage = () => {
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Leave Application</h1>
               <p className="text-muted-foreground">
-                Kelola pengajuan izin dan sakit Anda
+                Manage your leave and sick leave applications
               </p>
             </div>
             <Dialog open={showDialog} onOpenChange={setShowDialog}>
@@ -230,7 +288,6 @@ const EmployeeLeaveApplicationPage = () => {
                       </SelectContent>
                     </Select>
                   </div>
-
                   {/* Start Date */}
                   <div className="space-y-2">
                     <Label htmlFor="start_date">Tanggal Mulai</Label>
@@ -242,7 +299,6 @@ const EmployeeLeaveApplicationPage = () => {
                       required
                     />
                   </div>
-
                   {/* End Date */}
                   <div className="space-y-2">
                     <Label htmlFor="end_date">Tanggal Selesai</Label>
@@ -254,7 +310,6 @@ const EmployeeLeaveApplicationPage = () => {
                       required
                     />
                   </div>
-
                   {/* Reason */}
                   <div className="space-y-2">
                     <Label htmlFor="reason">Alasan</Label>
@@ -267,7 +322,6 @@ const EmployeeLeaveApplicationPage = () => {
                       rows={4}
                     />
                   </div>
-
                   {/* Attachment */}
                   <div className="space-y-2">
                     <Label htmlFor="attachment">Lampiran (Surat Keterangan)</Label>
@@ -302,7 +356,6 @@ const EmployeeLeaveApplicationPage = () => {
               </DialogContent>
             </Dialog>
           </div>
-
           {/* Success Message */}
           {success && (
             <div className="p-3 bg-green-50 border border-green-200 rounded-md flex items-center gap-2 text-green-700">
@@ -310,43 +363,95 @@ const EmployeeLeaveApplicationPage = () => {
               <span className="text-sm">{success}</span>
             </div>
           )}
-
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+            </div>
+            
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-8 w-full sm:w-auto flex-wrap">
+              {/* Date Range */}
+              <div className="flex items-center gap-2">
+                <Input
+                  type="date"
+                  value={filterStartDate}
+                  onChange={(e) => setFilterStartDate(e.target.value)}
+                  className="w-[160px]"
+                  placeholder="Start date"
+                />
+                <span className="text-muted-foreground">to</span>
+                <Input
+                  type="date"
+                  value={filterEndDate}
+                  onChange={(e) => setFilterEndDate(e.target.value)}
+                  className="w-[160px]"
+                  placeholder="End date"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Type Filter */}
+                <Select value={filterType} onValueChange={setFilterType}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All Types</SelectItem>
+                    <SelectItem value="SICK">Sick</SelectItem>
+                    <SelectItem value="LEAVE">Leave</SelectItem>
+                  </SelectContent>
+                </Select>
+                {/* Status Filter */}
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All Status</SelectItem>
+                    <SelectItem value="0">Pending</SelectItem>
+                    <SelectItem value="1">Approved</SelectItem>
+                    <SelectItem value="2">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
           {/* Applications Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Riwayat Pengajuan</CardTitle>
-              <CardDescription>
-                Daftar pengajuan izin dan sakit Anda
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {fetchLoading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                  <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
-                </div>
-              ) : (
-                <div className="rounded-md border">
+          {fetchLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              {
+                fetchLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                    <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
+                  </div>
+                ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Tipe</TableHead>
-                        <TableHead>Tanggal</TableHead>
-                        <TableHead>Alasan</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Reason</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Lampiran</TableHead>
-                        <TableHead>Dibuat</TableHead>
+                        <TableHead>Attachment</TableHead>
+                        <TableHead>Created</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {applications.length === 0 ? (
+                      {filteredApplications.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={6} className="text-center text-muted-foreground">
-                            Belum ada pengajuan
+                            {filterStartDate || filterEndDate || filterType !== 'ALL' || filterStatus !== 'ALL'
+                              ? 'No applications found matching your filters'
+                              : 'Belum ada pengajuan'}
                           </TableCell>
                         </TableRow>
                       ) : (
-                        applications.map((app) => (
+                        filteredApplications.map((app) => (
                           <TableRow key={app.employee_leave_application_id}>
                             <TableCell>{getTypeBadge(app.type)}</TableCell>
                             <TableCell className="whitespace-nowrap">
@@ -375,10 +480,17 @@ const EmployeeLeaveApplicationPage = () => {
                       )}
                     </TableBody>
                   </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                )
+              }
+            </div>
+          )}
+          
+          {/* Results Counter */}
+          {!fetchLoading && filteredApplications.length > 0 && (
+            <div className="text-sm text-muted-foreground">
+              Showing {filteredApplications.length} of {applications.length} applications
+            </div>
+          )}
         </div>
       </SidebarInset>
     </SidebarProvider>
