@@ -24,7 +24,7 @@ export const holidayApi = {
     company_custom_holiday_id: string, 
     data: UpdateHolidayRequest
   ): Promise<ApiResponse<Holiday>> => {
-    const response = await apiClient.patch(`/api/v1/company/custom-holiday/${company_custom_holiday_id}`, data);
+    const response = await apiClient.put(`/api/v1/company/custom-holiday/${company_custom_holiday_id}`, data);
     return response.data;
   },
   delete: async (company_custom_holiday_id: string): Promise<ApiResponse<Holiday>> => {
