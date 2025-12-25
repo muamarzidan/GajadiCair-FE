@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, Loader2, FileText, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Search, Filter, Loader2, FileText, CheckCircle, XCircle, Clock, FileIcon } from 'lucide-react';
 
 import { companyLeaveApplicationApi } from '@/services/leaveApplication';
+import { getImageUrl } from '@/utils';
 import type { LeaveApplication } from '@/types/leaveApplication';
 import { getErrorMessage, formatDate } from '@/utils';
 import { AppSidebar } from '@/components/app-sidebar';
@@ -192,7 +193,6 @@ const ApplicationPage = () => {
               Manage employee leave and sick applications
             </p>
           </div>
-
           {error && (
             <Card className="border-red-200 bg-red-50">
               <CardContent className="pt-6">
@@ -212,7 +212,6 @@ const ApplicationPage = () => {
                 className="pl-9"
               />
             </div>
-            
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <div className="flex gap-2">
                 <Filter className="h-4 w-4 text-muted-foreground" />
@@ -251,6 +250,7 @@ const ApplicationPage = () => {
                   <TableHead>Type</TableHead>
                   <TableHead>Period</TableHead>
                   <TableHead>Reason</TableHead>
+                  <TableHead>Attacment</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Applied Date</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -293,6 +293,23 @@ const ApplicationPage = () => {
                       </TableCell>
                       <TableCell className="max-w-xs truncate">
                         {app.reason}
+                      </TableCell>
+                      <TableCell>
+                        <div className='flex items-center gap-1'>
+                          <FileIcon className="h-4 w-4" />
+                          {app.attachment_uri ? (
+                            <a
+                              href={getImageUrl(app.attachment_uri)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline"
+                            >
+                              Open
+                            </a>
+                          ) : (
+                            <span className="text-muted-foreground">No Attachment</span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>{getStatusBadge(app.status)}</TableCell>
                       <TableCell className="text-muted-foreground">

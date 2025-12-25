@@ -300,16 +300,16 @@ const SettingsPage = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Clock className="h-5 w-5" />
-                    Pengaturan Jam Kerja
+                    Work Hours Settings
                   </CardTitle>
                   <CardDescription>
-                    Atur jam kerja dan toleransi keterlambatan
+                    Set work hours and attendance tolerance
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Minimum Hours Per Day */}
                   <div className="space-y-2">
-                    <Label htmlFor="minimum_hours">Minimum Jam Kerja Per Hari</Label>
+                    <Label htmlFor="minimum_hours">Minimum Hours Per Day</Label>
                     <Input
                       id="minimum_hours"
                       type="number"
@@ -321,13 +321,13 @@ const SettingsPage = () => {
                       required
                     />
                     <p className="text-xs text-muted-foreground">
-                      Dalam satuan jam (contoh: 8 untuk 8 jam)
+                      In hours (e.g., 8 for 8 hours)
                     </p>
                   </div>
 
                   {/* Attendance Open Time */}
                   <div className="space-y-2">
-                    <Label htmlFor="open_time">Jam Buka Absensi</Label>
+                    <Label htmlFor="open_time">Attendance Open Time</Label>
                     <Input
                       id="open_time"
                       type="time"
@@ -338,7 +338,7 @@ const SettingsPage = () => {
 
                   {/* Attendance Close Time */}
                   <div className="space-y-2">
-                    <Label htmlFor="close_time">Jam Tutup Absensi</Label>
+                    <Label htmlFor="close_time">Attendance Close Time</Label>
                     <Input
                       id="close_time"
                       type="time"
@@ -349,7 +349,7 @@ const SettingsPage = () => {
 
                   {/* Work Start Time */}
                   <div className="space-y-2">
-                    <Label htmlFor="work_start">Jam Mulai Kerja</Label>
+                    <Label htmlFor="work_start">Work Start Time</Label>
                     <Input
                       id="work_start"
                       type="time"
@@ -360,34 +360,34 @@ const SettingsPage = () => {
 
                   {/* Tolerance Minutes */}
                   <div className="space-y-2">
-                    <Label htmlFor="tolerance">Toleransi Keterlambatan (Menit)</Label>
+                    <Label htmlFor="tolerance">Attendance Tolerance (Minutes)</Label>
                     <Input
                       id="tolerance"
                       type="number"
                       min="0"
-                      placeholder="Contoh: 15"
+                      placeholder="Example: 15"
                       value={attendanceToleranceMinutes}
                       onChange={(e) => setAttendanceToleranceMinutes(Math.max(0, Number(e.target.value)))}
                       required
                     />
                     {/* <p className="text-xs text-muted-foreground">
-                      Dalam satuan menit (contoh: 15 untuk 15 menit)
+                      In minutes (e.g., 15 for 15 minutes)
                     </p> */}
                   </div>
 
                   {/* Payroll Day */}
                   <div className="space-y-2">
-                    <Label htmlFor="payroll_day">Tanggal Gajian (1-31)</Label>
+                    <Label htmlFor="payroll_day">Payroll Day (1-27)</Label>
                     <Input
                       id="payroll_day"
                       type="number"
                       min="1"
-                      max="31"
-                      placeholder="Contoh: 25"
+                      max="27"
+                      placeholder="Example: 25"
                       value={payrollDayOfMonth}
                       onChange={(e) => {
                         const value = Number(e.target.value);
-                        setPayrollDayOfMonth(Math.min(31, Math.max(1, value)));
+                        setPayrollDayOfMonth(Math.min(27, Math.max(1, value)));
                       }}
                       required
                     />
@@ -397,16 +397,15 @@ const SettingsPage = () => {
                   </div>
                 </CardContent>
               </Card>
-
               {/* Location Settings */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <MapPin className="h-5 w-5" />
-                    Pengaturan Lokasi Absensi
+                    Settings for Location-Based Attendance
                   </CardTitle>
                   <CardDescription>
-                    Atur lokasi dan radius untuk absensi berbasis lokasi
+                    Set the location and radius for location-based attendance
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -421,7 +420,7 @@ const SettingsPage = () => {
                       htmlFor="location_enabled"
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                     >
-                      Aktifkan Absensi Berbasis Lokasi
+                      Enable Location-Based Attendance
                     </Label>
                   </div>
 
@@ -429,12 +428,12 @@ const SettingsPage = () => {
                     <>
                       {/* Radius */}
                       <div className="space-y-2">
-                        <Label htmlFor="radius">Radius Absensi (Meter)</Label>
+                        <Label htmlFor="radius">Attendance Radius (Meters)</Label>
                         <Input
                           id="radius"
                           type="number"
                           min="0"
-                          placeholder="Contoh: 200"
+                          placeholder="Example: 200"
                           value={attendanceRadiusMeters}
                           onChange={(e) => setAttendanceRadiusMeters(Math.max(0, Number(e.target.value)))}
                           required
@@ -442,7 +441,7 @@ const SettingsPage = () => {
                       </div>
                       {/* Map Picker */}
                       <div className="space-y-2">
-                        <Label>Pilih Lokasi Kantor di Peta</Label>
+                        <Label>Select Office Location on the Map</Label>
                         <MapPicker
                           latitude={latitude}
                           longitude={longitude}
@@ -471,7 +470,7 @@ const SettingsPage = () => {
                               className="w-full mt-2 gap-2"
                             >
                               <Navigation className={`h-4 w-4 ${loadingLocation ? 'animate-spin' : ''}`} />
-                              {loadingLocation ? 'Mendapatkan Lokasi...' : 'Presisikan lokasi saya'}
+                              {loadingLocation ? 'Getting Location...' : 'Pinpoint My Location'}
                             </Button>
                           </>
                         )}
@@ -486,10 +485,10 @@ const SettingsPage = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Calendar className="h-5 w-5" />
-                    Hari Kerja
+                    Working Days Settings
                   </CardTitle>
                   <CardDescription>
-                    Pilih hari kerja aktif untuk karyawan
+                    Select which days are considered working days
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -510,7 +509,6 @@ const SettingsPage = () => {
                         Senin
                       </Label>
                     </div>
-
                     {/* Tuesday */}
                     <div className="flex items-center space-x-2">
                       <Checkbox
@@ -527,7 +525,6 @@ const SettingsPage = () => {
                         Selasa
                       </Label>
                     </div>
-
                     {/* Wednesday */}
                     <div className="flex items-center space-x-2">
                       <Checkbox
@@ -544,7 +541,6 @@ const SettingsPage = () => {
                         Rabu
                       </Label>
                     </div>
-
                     {/* Thursday */}
                     <div className="flex items-center space-x-2">
                       <Checkbox
@@ -561,7 +557,6 @@ const SettingsPage = () => {
                         Kamis
                       </Label>
                     </div>
-
                     {/* Friday */}
                     <div className="flex items-center space-x-2">
                       <Checkbox
@@ -578,7 +573,6 @@ const SettingsPage = () => {
                         Jumat
                       </Label>
                     </div>
-
                     {/* Saturday */}
                     <div className="flex items-center space-x-2">
                       <Checkbox
@@ -595,7 +589,6 @@ const SettingsPage = () => {
                         Sabtu
                       </Label>
                     </div>
-
                     {/* Sunday */}
                     <div className="flex items-center space-x-2">
                       <Checkbox
@@ -620,7 +613,7 @@ const SettingsPage = () => {
             {/* Submit Button */}
             <div className="flex justify-end">
               <Button type="submit" size="lg" disabled={loading}>
-                {loading ? 'Menyimpan...' : 'Simpan Pengaturan'}
+                {loading ? 'Saving...' : 'Save Settings'}
               </Button>
             </div>
           </form>

@@ -258,10 +258,10 @@ const UpgradePage = () => {
     period: plan.level > 0 ? '/bulan' : '',
     description:
       plan.level === 0
-        ? 'Untuk startup dan tim kecil'
+        ? 'For small startups'
         : plan.level === 1
-        ? 'Untuk perusahaan berkembang'
-        : 'Untuk perusahaan besar',
+        ? 'For growing companies'
+        : 'For large enterprises',
     features: plan.features.map((feature) => ({ text: feature, included: true })),
     cta:
       plan.level === currentPlan
@@ -292,7 +292,7 @@ const UpgradePage = () => {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Employees</BreadcrumbPage>
+                  <BreadcrumbPage>Upgrade</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>

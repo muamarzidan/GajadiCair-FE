@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Camera, RefreshCw, Check, AlertCircle, X } from 'lucide-react';
+import { Camera, RefreshCw, Check, AlertCircle, X, Home } from 'lucide-react';
 
 import { faceRecognitionApi } from '@/services/faceRecognition';
 import { Button } from '@/components/ui/button';
@@ -303,6 +304,10 @@ const FaceRegistrationPage = () => {
                 <Camera className="h-5 w-5 mr-2" />
                 Buka Kamera
               </Button>
+              <p className="text-center text-gray-600">or</p>
+              <Link to="/" className="block text-sm text-muted-foreground hover:text-primary transition-colors w-full text-center">
+                <Home className="inline h-4 w-4" /> Back to home
+              </Link>
             </>
           ) : (
             <>

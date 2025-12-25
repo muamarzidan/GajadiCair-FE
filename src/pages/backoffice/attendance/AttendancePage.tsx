@@ -371,7 +371,7 @@ const AttendancePage = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
-                Status Hari Ini
+                Today status
               </CardTitle>
               <CardDescription>
                 {format(new Date(), 'EEEE, dd MMMM yyyy')}
@@ -506,20 +506,17 @@ const AttendancePage = () => {
           {/* Attendance History */}
           <Card>
             <CardHeader>
-              <CardTitle>Riwayat Absensi</CardTitle>
-              <CardDescription>
-                Histori absensi Anda
-              </CardDescription>
+              <CardTitle>Your past attendance records</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Tanggal</TableHead>
+                      <TableHead>Date</TableHead>
                       <TableHead>Check-In</TableHead>
                       <TableHead>Check-Out</TableHead>
-                      <TableHead>Durasi</TableHead>
+                      <TableHead>Duration</TableHead>
                       <TableHead>Status</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -527,7 +524,7 @@ const AttendancePage = () => {
                     {attendanceHistory.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={5} className="text-center text-muted-foreground">
-                          Belum ada data absensi
+                          No attendance records found.
                         </TableCell>
                       </TableRow>
                     ) : (
