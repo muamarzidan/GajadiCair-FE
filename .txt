@@ -2,7 +2,7 @@ check in out
 masuin api working day kedalam chekcn in/out
 bikin design face recog
 
-ui dashboard admin
+ui dashboard admin/employee
 
 
 

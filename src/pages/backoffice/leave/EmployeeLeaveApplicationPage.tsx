@@ -263,21 +263,21 @@ const EmployeeLeaveApplicationPage = () => {
             <Dialog open={showDialog} onOpenChange={setShowDialog}>
               <DialogTrigger asChild>
                 <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Ajukan Izin/Sakit
+                  <Plus className="h-4 w-4 mr-1" />
+                  Submit Leave/Sick
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
-                  <DialogTitle>Ajukan Izin/Sakit</DialogTitle>
+                  <DialogTitle>Submit Leave/Sick</DialogTitle>
                   <DialogDescription>
-                    Isi form untuk mengajukan izin atau sakit
+                    Fill out the form to apply for leave or sick leave
                   </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {/* Type */}
                   <div className="space-y-2">
-                    <Label htmlFor="type">Tipe</Label>
+                    <Label htmlFor="type">Type</Label>
                     <Select value={type} onValueChange={(value) => setType(value as 'SICK' | 'LEAVE')}>
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih tipe" />
@@ -290,7 +290,7 @@ const EmployeeLeaveApplicationPage = () => {
                   </div>
                   {/* Start Date */}
                   <div className="space-y-2">
-                    <Label htmlFor="start_date">Tanggal Mulai</Label>
+                    <Label htmlFor="start_date">Start Date</Label>
                     <Input
                       id="start_date"
                       type="date"
@@ -301,7 +301,7 @@ const EmployeeLeaveApplicationPage = () => {
                   </div>
                   {/* End Date */}
                   <div className="space-y-2">
-                    <Label htmlFor="end_date">Tanggal Selesai</Label>
+                    <Label htmlFor="end_date">End Date</Label>
                     <Input
                       id="end_date"
                       type="date"
@@ -312,10 +312,10 @@ const EmployeeLeaveApplicationPage = () => {
                   </div>
                   {/* Reason */}
                   <div className="space-y-2">
-                    <Label htmlFor="reason">Alasan</Label>
+                    <Label htmlFor="reason">Reason</Label>
                     <Textarea
                       id="reason"
-                      placeholder="Masukkan alasan izin/sakit"
+                      placeholder="Enter reason for leave/sick application"
                       value={reason}
                       onChange={(e) => setReason(e.target.value)}
                       required
@@ -324,7 +324,7 @@ const EmployeeLeaveApplicationPage = () => {
                   </div>
                   {/* Attachment */}
                   <div className="space-y-2">
-                    <Label htmlFor="attachment">Lampiran (Surat Keterangan)</Label>
+                    <Label htmlFor="attachment">Attachment (Supporting Document)</Label>
                     <Input
                       id="attachment"
                       type="file"
@@ -346,10 +346,10 @@ const EmployeeLeaveApplicationPage = () => {
 
                   <div className="flex justify-end gap-3">
                     <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>
-                      Batal
+                      Cancel
                     </Button>
                     <Button type="submit" disabled={loading}>
-                      {loading ? 'Mengirim...' : 'Kirim Pengajuan'}
+                      {loading ? 'Submitting...' : 'Submit Application'}
                     </Button>
                   </div>
                 </form>
@@ -468,7 +468,7 @@ const EmployeeLeaveApplicationPage = () => {
                                   className="text-primary hover:underline flex items-center gap-1"
                                 >
                                   <FileIcon className="h-4 w-4" />
-                                  Lihat
+                                  Open
                                 </a>
                               )}
                             </TableCell>

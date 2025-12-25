@@ -9,7 +9,6 @@ export const workingDayApi = {
     );
     return response.data;
   },
-
   updateWorkingDay: async (
     data: UpdateWorkingDayRequest
   ): Promise<ApiResponse<WorkingDay>> => {

@@ -77,8 +77,6 @@ export const attendanceApi = {
     );
     return response.data;
   },
-
-  // Company endpoints
   getCompanyAttendanceOverview: async (date?: string): Promise<ApiResponse<CompanyAttendanceOverviewResponse>> => {
     const params = date ? `?date=${date}` : '';
     const response = await apiClient.get<ApiResponse<CompanyAttendanceOverviewResponse>>(
