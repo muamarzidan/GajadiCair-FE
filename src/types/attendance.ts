@@ -1,15 +1,14 @@
 export interface AttendanceRecord {
-  attendance_id: string;
+  employee_attendance_id: string;
   employee_id: string;
-  check_in_time: string;
+  attendance_date: string;
+  check_in_time: string | null;
   check_out_time: string | null;
-  check_in_latitude: number;
-  check_in_longitude: number;
-  check_out_latitude: number | null;
-  check_out_longitude: number | null;
-  work_duration_minutes: number | null;
-  status: 'present' | 'late' | 'absent' | 'half-day';
-  notes: string | null;
+  total_work_hours: number | null;
+  status: 'PRESENT' | 'ABSENT' | 'LEAVE' | 'SICK';
+  absent_reason: string | null;
+  late_minutes: number | null;
+  is_late: boolean;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;

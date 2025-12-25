@@ -6,7 +6,7 @@ import { companyProfileApi, employeeProfileApi } from '@/services/profile';
 // import { getImageUrl } from '@/utils';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -124,15 +124,13 @@ const ProfilePage = () => {
     setError('');
     setSuccess('');
 
-    // Validation
     if (newPassword !== confirmPassword) {
-      setError('Password baru dan konfirmasi password tidak cocok');
+      setError('New password and confirmation do not match');
       setLoading(false);
       return;
     }
-
     if (newPassword.length < 6) {
-      setError('Password baru minimal 6 karakter');
+      setError('New password must be at least 6 characters long');
       setLoading(false);
       return;
     }
@@ -147,26 +145,26 @@ const ProfilePage = () => {
       if (userRole === 'company') {
         const response = await companyProfileApi.changePassword(data);
         if (response.statusCode === 200) {
-          setSuccess('Password berhasil diubah!');
+          setSuccess('Password successfully changed!');
           setOldPassword('');
           setNewPassword('');
           setConfirmPassword('');
         } else {
-          throw new Error(response.message || 'Gagal mengubah password');
+          throw new Error(response.message || 'Failed to change password');
         }
       } else if (userRole === 'employee') {
         const response = await employeeProfileApi.changePassword(data);
         if (response.statusCode === 200) {
-          setSuccess('Password berhasil diubah!');
+          setSuccess('Password successfully changed!');
           setOldPassword('');
           setNewPassword('');
           setConfirmPassword('');
         } else {
-          throw new Error(response.message || 'Gagal mengubah password');
+          throw new Error(response.message || 'Failed to change password');
         }
       }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Terjadi kesalahan saat mengubah password';
+      const errorMessage = err.response?.data?.message || err.message || 'An error occurred while changing the password';
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -201,7 +199,7 @@ const ProfilePage = () => {
             <div>
               <h1 className="text-3xl font-bold tracking-tight">My Profile</h1>
               <p className="text-muted-foreground">
-                Kelola informasi profil dan keamanan akun Anda
+                Manage your profile information and account security
               </p>
             </div>
           </div>
@@ -219,7 +217,6 @@ const ProfilePage = () => {
               <span className="text-sm">{success}</span>
             </div>
           )}
-
           <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
             {/* Update Profile Card */}
             <Card className="h-fit">
@@ -228,9 +225,6 @@ const ProfilePage = () => {
                   <UserIcon className="h-5 w-5" />
                   Update Profile
                 </CardTitle>
-                <CardDescription>
-                  Ubah informasi profil Anda
-                </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleUpdateProfile} className="space-y-4">
@@ -254,7 +248,7 @@ const ProfilePage = () => {
                         <Input
                           id="name"
                           type="text"
-                          placeholder="Masukkan nama"
+                          placeholder="Type your name"
                           value={name}
                           onChange={(e) => setName(e.target.value)}
                           required
@@ -264,7 +258,7 @@ const ProfilePage = () => {
                   }
                   {/* Profile Picture Input */}
                   <div className="space-y-2">
-                    <Label htmlFor="profile_picture">Foto Profile</Label>
+                    <Label htmlFor="profile_picture">Profile Picture</Label>
                     <div className="flex items-center gap-2">
                       <Input
                         id="profile_picture"
@@ -282,7 +276,7 @@ const ProfilePage = () => {
 
                   {/* Submit Button */}
                   <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? 'Menyimpan...' : 'Simpan Perubahan'}
+                    {loading ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </form>
               </CardContent>
@@ -293,34 +287,30 @@ const ProfilePage = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Lock className="h-5 w-5" />
-                  Ubah Password
+                  Change Password
                 </CardTitle>
-                <CardDescription>
-                  Update password untuk keamanan akun Anda
-                </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleChangePassword} className="space-y-4">
                   {/* Old Password */}
                   <div className="space-y-2">
-                    <Label htmlFor="old_password">Password Lama</Label>
+                    <Label htmlFor="old_password">Old Password</Label>
                     <Input
                       id="old_password"
                       type="password"
-                      placeholder="Masukkan password lama"
+                      placeholder="Type old password"
                       value={oldPassword}
                       onChange={(e) => setOldPassword(e.target.value)}
                       required
                     />
                   </div>
-
                   {/* New Password */}
                   <div className="space-y-2">
-                    <Label htmlFor="new_password">Password Baru</Label>
+                    <Label htmlFor="new_password">New Password</Label>
                     <Input
                       id="new_password"
                       type="password"
-                      placeholder="Masukkan password baru"
+                      placeholder="Type new password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       required
@@ -330,24 +320,22 @@ const ProfilePage = () => {
                       Minimal 6 karakter
                     </p>
                   </div>
-
                   {/* Confirm Password */}
                   <div className="space-y-2">
-                    <Label htmlFor="confirm_password">Konfirmasi Password Baru</Label>
+                    <Label htmlFor="confirm_password">Confirm New Password</Label>
                     <Input
                       id="confirm_password"
                       type="password"
-                      placeholder="Konfirmasi password baru"
+                      placeholder="Confirm new password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
                       minLength={6}
                     />
                   </div>
-
                   {/* Submit Button */}
                   <Button type="submit" className="w-full" disabled={loading} variant="outline">
-                    {loading ? 'Mengubah...' : 'Ubah Password'}
+                    {loading ? 'Changing...' : 'Change Password'}
                   </Button>
                 </form>
               </CardContent>

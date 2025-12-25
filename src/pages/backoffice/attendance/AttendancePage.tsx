@@ -2,7 +2,13 @@ import { useState, useRef, useEffect } from 'react';
 import { Camera, Clock, MapPin, Check, X, RefreshCw, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 
-import { attendanceApi, type TodayAttendanceStatus, type AttendanceRecord } from '@/services/attendance';
+import { 
+  attendanceApi, 
+  type TodayAttendanceStatus, 
+  type AttendanceRecord,
+  type CheckInEligibility,
+  type CheckOutEligibility
+} from '@/services/attendance';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,8 +50,8 @@ const AttendancePage = () => {
   const [checkType, setCheckType] = useState<'in' | 'out'>('in');
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [geoError, setGeoError] = useState<string>('');
-  const [checkInEligibility, setCheckInEligibility] = useState<any>(null);
-  const [checkOutEligibility, setCheckOutEligibility] = useState<any>(null);
+  const [checkInEligibility, setCheckInEligibility] = useState<CheckInEligibility | null>(null);
+  const [checkOutEligibility, setCheckOutEligibility] = useState<CheckOutEligibility | null>(null);
 
   useEffect(() => {
     loadTodayStatus();
@@ -267,14 +273,18 @@ const AttendancePage = () => {
           throw new Error(response.message || 'Check-out gagal');
         }
       }
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Terjadi kesalahan';
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { message?: string; errors?: { message?: string } } }; message?: string };
+      const errorMessage = 
+        axiosError.response?.data?.message || 
+        axiosError.response?.data?.errors?.message || 
+        axiosError.message || 
+        'Terjadi kesalahan saat memproses absensi';
       setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
-
   const closeCamera = () => {
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
@@ -282,36 +292,33 @@ const AttendancePage = () => {
     }
     setShowCamera(false);
   };
-
   const handleCheckIn = async () => {
     setCheckType('in');
     await startCamera();
   };
-
   const handleCheckOut = async () => {
     setCheckType('out');
     await startCamera();
   };
-
   const getStatusBadge = (status: string) => {
+    const statusUpper = status.toUpperCase();
     const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-      present: 'default',
-      late: 'secondary',
-      absent: 'destructive',
-      'half-day': 'outline',
+      PRESENT: 'default',
+      ABSENT: 'destructive',
+      SICK: 'secondary',
+      LEAVE: 'outline',
     };
     return (
-      <Badge variant={variants[status] || 'default'}>
-        {status?.toUpperCase()}
+      <Badge variant={variants[statusUpper] || 'default'}>
+        {statusUpper}
       </Badge>
     );
   };
-
-  const formatDuration = (minutes: number | null) => {
-    if (!minutes) return '-';
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}h ${mins}m`;
+  const formatDuration = (hours: number | null) => {
+    if (!hours) return '-';
+    const wholeHours = Math.floor(hours);
+    const mins = Math.round((hours - wholeHours) * 60);
+    return `${wholeHours}h ${mins}m`;
   };
 
   return (
@@ -342,11 +349,10 @@ const AttendancePage = () => {
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Attendance</h1>
               <p className="text-muted-foreground">
-                Kelola absensi Anda dengan face recognition
+                Manage your attendance with facial recognition
               </p>
             </div>
           </div>
-
           {/* Error/Success Messages */}
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-center gap-2 text-red-700">
@@ -360,7 +366,6 @@ const AttendancePage = () => {
               <span className="text-sm">{success}</span>
             </div>
           )}
-
           {/* Today's Status Card */}
           <Card>
             <CardHeader>
@@ -384,20 +389,16 @@ const AttendancePage = () => {
                       ? format(new Date(todayStatus.check_in_time), 'HH:mm:ss')
                       : '-'}
                   </div>
-                  {!todayStatus?.has_checked_in && (
-                    <>
-                      <Button 
-                        onClick={handleCheckIn} 
-                        disabled={loading || !checkInEligibility?.can_check_in} 
-                        className="mt-2"
-                      >
-                        <Camera className="h-4 w-4 mr-2" />
-                        Check In
-                      </Button>
-                      {checkInEligibility && !checkInEligibility.can_check_in && checkInEligibility.reason && (
-                        <p className="text-xs text-red-500 mt-1">{checkInEligibility.reason}</p>
-                      )}
-                    </>
+                  <Button 
+                    onClick={handleCheckIn} 
+                    disabled={loading || !checkInEligibility?.can_check_in} 
+                    className="mt-2"
+                  >
+                    <Camera className="h-4 w-4 mr-2" />
+                    Check In
+                  </Button>
+                  {checkInEligibility && !checkInEligibility.can_check_in && checkInEligibility.reason && (
+                    <p className="text-xs text-gray-500 mt-1">{checkInEligibility.reason}</p>
                   )}
                 </div>
 
@@ -411,38 +412,33 @@ const AttendancePage = () => {
                       ? format(new Date(todayStatus.check_out_time), 'HH:mm:ss')
                       : '-'}
                   </div>
-                  {todayStatus?.has_checked_in && !todayStatus?.has_checked_out && (
-                    <>
-                      <Button 
-                        onClick={handleCheckOut} 
-                        disabled={loading || !checkOutEligibility?.can_check_out} 
-                        variant="outline" 
-                        className="mt-2"
-                      >
-                        <Camera className="h-4 w-4 mr-2" />
-                        Check Out
-                      </Button>
-                      {checkOutEligibility && !checkOutEligibility.can_check_out && checkOutEligibility.reason && (
-                        <p className="text-xs text-red-500 mt-1">{checkOutEligibility.reason}</p>
-                      )}
-                    </>
+                  <Button 
+                    onClick={handleCheckOut} 
+                    disabled={loading || !checkOutEligibility?.can_check_out} 
+                    variant="outline" 
+                    className="mt-2"
+                  >
+                    <Camera className="h-4 w-4 mr-2" />
+                    Check Out
+                  </Button>
+                  {checkOutEligibility && !checkOutEligibility.can_check_out && checkOutEligibility.reason && (
+                    <p className="text-xs text-gray-500 mt-1">{checkOutEligibility.reason}</p>
                   )}
                 </div>
               </div>
 
-              {todayStatus?.work_duration_minutes && (
+              {todayStatus?.work_duration_minutes && todayStatus.work_duration_minutes > 0 && (
                 <div className="mt-4 pt-4 border-t">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Durasi Kerja</span>
                     <span className="text-lg font-semibold">
-                      {formatDuration(todayStatus.work_duration_minutes)}
+                      {formatDuration(todayStatus.work_duration_minutes / 60)}
                     </span>
                   </div>
                 </div>
               )}
             </CardContent>
           </Card>
-
           {/* Camera Modal */}
           {showCamera && (
             <Card className="border-primary">
@@ -536,25 +532,21 @@ const AttendancePage = () => {
                       </TableRow>
                     ) : (
                       attendanceHistory.map((record) => (
-                        <TableRow key={record.attendance_id}>
+                        <TableRow key={record.employee_attendance_id}>
                           <TableCell>
-                            {
-                              record.check_in_time ? (
-                                format(new Date(record.check_in_time), 'dd MMMM yyyy')
-                              ) : (
-                                "-"
-                              )
-                            }
+                            {format(new Date(record.attendance_date), 'dd MMMM yyyy')}
                           </TableCell>
                           <TableCell>
-                            {format(new Date(record.check_in_time), 'HH:mm:ss')}
+                            {record.check_in_time
+                              ? format(new Date(record.check_in_time), 'HH:mm:ss')
+                              : '-'}
                           </TableCell>
                           <TableCell>
                             {record.check_out_time
                               ? format(new Date(record.check_out_time), 'HH:mm:ss')
                               : '-'}
                           </TableCell>
-                          <TableCell>{formatDuration(record.work_duration_minutes)}</TableCell>
+                          <TableCell>{formatDuration(record.total_work_hours)}</TableCell>
                           <TableCell>{getStatusBadge(record.status)}</TableCell>
                         </TableRow>
                       ))
