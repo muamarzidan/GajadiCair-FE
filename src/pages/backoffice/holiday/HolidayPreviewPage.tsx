@@ -227,7 +227,7 @@ const HolidayPreviewPage = () => {
                           {events.slice(0, 3).map((holiday, idx) => (
                             <div
                               key={`${holiday.company_custom_holiday_id}-${idx}`}
-                              className="text-xs p-1 bg-blue-100 text-blue-700 rounded truncate"
+                              className="text-xs p-1 bg-red-100 text-red-700 rounded truncate"
                               title={holiday.description}
                             >
                               {holiday.description}
@@ -246,21 +246,21 @@ const HolidayPreviewPage = () => {
               </div>
             </Card>
           )}
-
           {/* Legend */}
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-primary rounded"></div>
-              <span>Today</span>
+          <div className="flex items-center justify-between gap-4 text-sm w-full">
+            <div className="text-sm text-muted-foreground">
+              Total holidays: {holidays.length}
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-blue-100 rounded"></div>
-              <span>Holiday</span>
+            <div className="flex gap-2">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-primary rounded"></div>
+                <span>Today</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-red-100 rounded"></div>
+                <span>Holiday</span>
+              </div>
             </div>
-          </div>
-
-          <div className="text-sm text-muted-foreground">
-            Total holidays: {holidays.length}
           </div>
         </div>
       </SidebarInset>

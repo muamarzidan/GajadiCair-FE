@@ -20,6 +20,7 @@ import HolidayPage from "@/pages/backoffice/holiday/HolidayPage";
 import HolidayPreviewPage from "@/pages/backoffice/holiday/HolidayPreviewPage";
 import AttendanceSummaryPage from "@/pages/backoffice/attendance/AttendanceSummaryPage";
 import AttendanceOverviewPage from "@/pages/backoffice/attendance/AttendanceOverviewPage";
+import EmployeeAttendanceSummaryPage from "@/pages/backoffice/attendance/EmployeeAttendanceSummaryPage";
 
 
 export const router = createBrowserRouter([
@@ -122,6 +123,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute requiredRole="employee">
         <AttendancePage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/my-attendance-summary",
+    element: (
+      <ProtectedRoute requiredRole="employee">
+        <EmployeeAttendanceSummaryPage />
       </ProtectedRoute>
     ),
   },

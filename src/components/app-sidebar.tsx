@@ -66,6 +66,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             title: "My Attendance",
             url: "/attendance",
           },
+          {
+            title: "Attendance Summary",
+            url: "/my-attendance-summary",
+          },
         ],
       });
       items.push({
