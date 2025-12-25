@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { useSidebar } from "@/components/ui/sidebar";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import {
@@ -25,6 +26,7 @@ import { Button } from  "./ui/button";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth()
+  const { open } = useSidebar()
   
   const companyInfo = {
     name: user?.name,
@@ -91,6 +93,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ],
       });
       items.push({
+        title: "Attendance",
+        url: "#",
+        icon: Calendar,
+        items: [
+          {
+            title: "Overview",
+            url: "/attendance-overview",
+          },
+          {
+            title: "Summary",
+            url: "/attendance-summary",
+          },
+        ],
+      });
+      items.push({
         title: "Application",
         url: "#",
         icon: FileText,
@@ -143,7 +160,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <span className="truncate text-xl font-bold">{userData.username}</span>
             )
           }
-          <div className="w-full flex items-center gap-3">
+          <div className={`w-full items-center gap-3 ${open ? "flex" : "hidden"}`}>
             {
               user?.role === 'company' ? (
                 <span className="truncate text-xs">{
@@ -178,7 +195,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <Link to="/upgrade" className="w-full">
               <Button variant="pro" size="lg" className="!rounded-xl w-full text-white !p-10 text-xl font-bold mb-4">
                 <Sparkles className="h-8 w-8" />
-                <span>Upgrade Plan</span>
+                {
+                  open ? (
+                    <span>Upgrade Plan</span>
+                  ) : null
+                }
               </Button>
             </Link>
           )

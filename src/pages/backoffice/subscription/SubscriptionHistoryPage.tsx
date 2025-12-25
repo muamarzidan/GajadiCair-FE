@@ -214,7 +214,6 @@ const SubscriptionHistoryPage = () => {
               </p>
             </div>
           </div>
-
           {/* Filters */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div className="flex items-center gap-2">
@@ -253,7 +252,6 @@ const SubscriptionHistoryPage = () => {
               </Select>
             </div>
           </div>
-
           {/* Error Message */}
           {error && (
             <Card className="border-red-200 bg-red-50">
@@ -262,9 +260,8 @@ const SubscriptionHistoryPage = () => {
               </CardContent>
             </Card>
           )}
-
           {/* Transactions Table */}
-          <Card>
+          <Card className="!shadow-none">
             <CardHeader>
               <CardTitle>Transaction History</CardTitle>
               <CardDescription>

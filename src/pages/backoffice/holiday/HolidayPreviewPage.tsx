@@ -162,7 +162,6 @@ const HolidayPreviewPage = () => {
               View all company holidays in calendar format
             </p>
           </div>
-
           {/* Calendar Controls */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -180,16 +179,15 @@ const HolidayPreviewPage = () => {
               {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
             </h2>
           </div>
-
           {isLoading ? (
-            <Card className="p-12">
+            <Card className="p-12 !shadow-none flex items-center justify-center">
               <div className="flex items-center justify-center gap-2">
                 <Loader2 className="h-6 w-6 animate-spin" />
                 <span>Loading holidays...</span>
               </div>
             </Card>
           ) : (
-            <Card className="p-4">
+            <Card className="p-4 !shadow-none">
               {/* Calendar Grid */}
               <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden">
                 {/* Day Headers */}

@@ -7,6 +7,7 @@ import type {
   CheckOutResponse,
   CheckInEligibility,
   CheckOutEligibility,
+  CompanyAttendanceOverviewResponse,
 } from '@/types/attendance';
 
 export const attendanceApi = {
@@ -73,6 +74,15 @@ export const attendanceApi = {
   checkOutCheck: async (): Promise<ApiResponse<CheckOutEligibility>> => {
     const response = await apiClient.get<ApiResponse<CheckOutEligibility>>(
       '/api/v1/employee/attendance/check-out-check'
+    );
+    return response.data;
+  },
+
+  // Company endpoints
+  getCompanyAttendanceOverview: async (date?: string): Promise<ApiResponse<CompanyAttendanceOverviewResponse>> => {
+    const params = date ? `?date=${date}` : '';
+    const response = await apiClient.get<ApiResponse<CompanyAttendanceOverviewResponse>>(
+      `/api/v1/company/attendance${params}`
     );
     return response.data;
   },
