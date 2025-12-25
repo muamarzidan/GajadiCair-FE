@@ -42,6 +42,32 @@ export interface CheckOutRequest {
   longitude: number;
 }
 
+// Company Attendance Overview Types
+export interface EmployeeAttendanceDetail {
+  employee_attendance_id: string;
+  attendance_date: string;
+  status: 'PRESENT' | 'ABSENT' | 'LEAVE' | 'SICK';
+  is_late: boolean;
+  late_minutes: number | null;
+  check_in_time: string | null;
+  check_out_time: string | null;
+  total_work_hours: number | null;
+  absent_reason: string | null;
+}
+
+export interface EmployeeWithAttendance {
+  employee_id: string;
+  name: string;
+  email: string;
+  avatar_uri: string | null;
+  attendance: EmployeeAttendanceDetail;
+}
+
+export interface CompanyAttendanceOverviewResponse {
+  date: string;
+  employees: EmployeeWithAttendance[];
+}
+
 export interface CheckOutResponse {
   attendance_id: string;
   check_in_time: string;

@@ -1,12 +1,12 @@
 check in out
 masuin api working day kedalam chekcn in/out
-ui dashboard admin, 
-custom day holiday
-summary list attendace
-bikin ui face recog
+bikin design face recog
+
+ui dashboard admin
+
+
 
 
 
 pastikan error response benar semua ambil dari message backend (AUTH DONE, KARYAWAN, CUTI, SETTINGS, ACCOUNT)
-
 jangan lupa implemen errornya   dengan benar, jangan pakai any, pakai component chadcn jika ada, clean code

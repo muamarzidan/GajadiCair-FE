@@ -18,6 +18,8 @@ import EmployeeLeaveApplicationPage from "@/pages/backoffice/leave/EmployeeLeave
 import CompanyLeaveApplicationPage from "@/pages/backoffice/leave/CompanyLeaveApplicationPage";
 import HolidayPage from "@/pages/backoffice/holiday/HolidayPage";
 import HolidayPreviewPage from "@/pages/backoffice/holiday/HolidayPreviewPage";
+import AttendanceSummaryPage from "@/pages/backoffice/attendance/AttendanceSummaryPage";
+import AttendanceOverviewPage from "@/pages/backoffice/attendance/AttendanceOverviewPage";
 
 
 export const router = createBrowserRouter([
@@ -120,6 +122,22 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute requiredRole="employee">
         <AttendancePage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/attendance-overview",
+    element: (
+      <ProtectedRoute requiredRole="company">
+        <AttendanceOverviewPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/attendance-summary",
+    element: (
+      <ProtectedRoute requiredRole="company">
+        <AttendanceSummaryPage />
       </ProtectedRoute>
     ),
   },
