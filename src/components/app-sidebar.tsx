@@ -7,7 +7,8 @@ import {
   Calendar,
   FileText,
   Receipt,
-  TreePalm
+  TreePalm,
+  DollarSign,
 } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -119,6 +120,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           {
             title: "Overview",
             url: "/application-management",
+          },
+        ],
+      });
+      items.push({
+        title: "Payroll",
+        url: "#",
+        icon: DollarSign,
+        items: [
+          {
+            title: "Overview",
+            url: "/payroll-summary",
+          },
+          {
+            title: "Allowance Rules",
+            url: "/payroll-allowance-rules",
+          },
+          {
+            title: "Deduction Rules",
+            url: "/payroll-deduction-rules",
           },
         ],
       });      

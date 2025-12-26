@@ -1,6 +1,6 @@
-check in out
-masuin api working day kedalam chekcn in/out
 bikin design face recog
+
+payrool
 
 ui dashboard admin/employee
 
