@@ -45,8 +45,6 @@ const SubscriptionHistoryPage = () => {
   const [error, setError] = useState('');
   const [transactions, setTransactions] = useState<SubscriptionTransaction[]>([]);
   const [filteredTransactions, setFilteredTransactions] = useState<SubscriptionTransaction[]>([]);
-  
-  // Filter states
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
@@ -200,7 +198,6 @@ const SubscriptionHistoryPage = () => {
             </Breadcrumb>
           </div>
         </header>
-
         <div className="flex flex-1 flex-col gap-6 p-6">
           {/* Header */}
           <div className="flex items-center justify-between">

@@ -21,6 +21,9 @@ import HolidayPreviewPage from "@/pages/backoffice/holiday/HolidayPreviewPage";
 import AttendanceSummaryPage from "@/pages/backoffice/attendance/AttendanceSummaryPage";
 import AttendanceOverviewPage from "@/pages/backoffice/attendance/AttendanceOverviewPage";
 import EmployeeAttendanceSummaryPage from "@/pages/backoffice/attendance/EmployeeAttendanceSummaryPage";
+import AllowanceRulesPage from "@/pages/backoffice/payroll/AllowanceRulesPage";
+import DeductionRulesPage from "@/pages/backoffice/payroll/DeductionRulesPage";
+import PayrollSummaryPage from "@/pages/backoffice/payroll/PayrollSummaryPage";
 
 
 export const router = createBrowserRouter([
@@ -179,6 +182,30 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute requiredRole="company">
         <CompanyLeaveApplicationPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/payroll-summary",
+    element: (
+      <ProtectedRoute requiredRole="company">
+        <PayrollSummaryPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/payroll-allowance-rules",
+    element: (
+      <ProtectedRoute requiredRole="company">
+        <AllowanceRulesPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/payroll-deduction-rules",
+    element: (
+      <ProtectedRoute requiredRole="company">
+        <DeductionRulesPage />
       </ProtectedRoute>
     ),
   },
