@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Loader2, Users } from 'lucide-react';
 
 import { employeeApi, type Employee } from '@/services/employee';
 import { bankApi, type Bank } from '@/services/bank';
+import type { AvailableSeats } from '@/types/employee';
 import { EmployeeFormDialog } from '@/components/backoffice/employee/EmployeeFormDialog';
 import { DeleteEmployeeDialog } from '@/components/backoffice/employee/DeleteEmployeeDialog';
 import { formatCurrency, formatDate } from '@/utils';
@@ -37,6 +38,7 @@ import { Badge } from '@/components/ui/badge';
 const EmployeePage = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [banks, setBanks] = useState<Bank[]>([]);
+  const [availableSeats, setAvailableSeats] = useState<AvailableSeats | null>(null);
   const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -53,6 +55,7 @@ const EmployeePage = () => {
         const employeesData = response.data.employees || [];
         setEmployees(employeesData);
         setFilteredEmployees(employeesData);
+        setAvailableSeats(response.data.availableSeats);
       };
     } catch (error) {
       console.error('Failed to fetch employees:', error);
@@ -105,8 +108,47 @@ const EmployeePage = () => {
     setIsDeleteOpen(true);
   };
 
-  console.log('filteredEmployees', filteredEmployees);
+  const isAddButtonDisabled = () => {
+    if (!availableSeats) return false;
+    if (availableSeats.seat_capacity === null) return false;
+    if (availableSeats.seat_availability !== null && availableSeats.seat_availability <= 0) {
+      return true;
+    }
+    
+    return false;
+  };
 
+  const getSeatStatusMessage = () => {
+    if (!availableSeats) return null;
+    
+    if (availableSeats.seat_capacity !== null) {
+      const remaining = availableSeats.seat_availability || 0;
+      const capacity = availableSeats.seat_capacity;
+      const taken = availableSeats.seat_taken;
+      
+      if (remaining <= 0) {
+        return {
+          type: 'error' as const,
+          message: `Employee limit reached (${taken}/${capacity}). Upgrade your plan to add more employees.`
+        };
+      } else if (remaining <= 2) {
+        return {
+          type: 'warning' as const,
+          message: `Only ${remaining} employee slot${remaining > 1 ? 's' : ''} remaining (${taken}/${capacity})`
+        };
+      }
+      
+      return {
+        type: 'info' as const,
+        message: `${remaining} employee slot${remaining > 1 ? 's' : ''} available (${taken}/${capacity})`
+      };
+    }
+    
+    return {
+      type: 'success' as const,
+      message: `${availableSeats.seat_taken} employee${availableSeats.seat_taken !== 1 ? 's' : ''} has enrolled in your company.`
+    };
+  };
 
   return (
     <SidebarProvider>
@@ -149,7 +191,11 @@ const EmployeePage = () => {
                 className="pl-9"
               />
             </div>
-            <Button onClick={handleAdd} className="gap-2">
+            <Button 
+              onClick={handleAdd} 
+              className="gap-2"
+              disabled={isAddButtonDisabled()}
+            >
               <Plus className="h-4 w-4" />
               Add Employee
             </Button>
@@ -235,6 +281,23 @@ const EmployeePage = () => {
               </TableBody>
             </Table>
           </div>
+          {/* Seat Status Alert */}
+          {availableSeats && getSeatStatusMessage() && (
+            <div
+              className={`p-4 rounded-lg border flex items-center gap-3 ${
+                getSeatStatusMessage()?.type === 'error'
+                  ? 'bg-red-50 border-red-200 text-red-800'
+                  : getSeatStatusMessage()?.type === 'warning'
+                  ? 'bg-yellow-50 border-yellow-200 text-yellow-800'
+                  : getSeatStatusMessage()?.type === 'info'
+                  ? 'bg-blue-50 border-blue-200 text-blue-800'
+                  : 'bg-green-50 border-green-200 text-green-800'
+              }`}
+            >
+              <Users className="h-5 w-5 flex-shrink-0" />
+              <p className="text-sm font-medium">{getSeatStatusMessage()?.message}</p>
+            </div>
+          )}
           <div className="text-sm text-muted-foreground">
             {filteredEmployees.length} of {employees.length} employees
           </div>

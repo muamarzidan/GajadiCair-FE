@@ -1,7 +1,6 @@
 available gesture list
 {{url}}/api/v1/employee/face-recognition/gesture-list
 
-pakai sheet diapi employee
 
 bikin design face recog
 Ttmbaain iterasi 0-50

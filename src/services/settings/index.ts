@@ -10,7 +10,6 @@ export const attendanceSettingsApi = {
 
     return response.data;
   },
-
   updateSettings: async (data: UpdateAttendanceSettingsRequest): Promise<ApiResponse<AttendanceSettings>> => {
     const response = await apiClient.put<ApiResponse<AttendanceSettings>>(
       '/api/v1/company/attendance/setting',
