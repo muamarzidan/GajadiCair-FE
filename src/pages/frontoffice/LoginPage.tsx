@@ -27,7 +27,6 @@ const LoginPage = () => {
 
   const from = location.state?.from?.pathname || '/dashboard';
   
-  // Redirect if already authenticated
   useEffect(() => {
     if (!authLoading && isAuthenticated && user) {
       if (user.role === 'employee' && user.is_face_enrolled === false) {
@@ -166,7 +165,7 @@ const LoginPage = () => {
                 <span className="bg-background px-2 text-muted-foreground">Or</span>
               </div>
             </div>
-            <div className='w-full'>
+            <div className='w-full flex justify-center items-center rounded-lg'>
               <GoogleLogin onSuccess={handleGoogleSuccess} onError={handleGoogleError} text="signin_with" shape="rectangular" size="large" width="100%" />
             </div>
           </>
