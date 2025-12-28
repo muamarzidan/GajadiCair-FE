@@ -68,7 +68,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             url: "/attendance",
           },
           {
-            title: "Attendance Summary",
+            title: "Summary",
             url: "/my-attendance-summary",
           },
         ],
@@ -79,8 +79,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: FileText,
         items: [
           {
-            title: "My Application",
+            title: "Overview",
             url: "/application",
+          },
+        ],
+      });
+      items.push({
+        title: "Payroll",
+        url: "#",
+        icon: DollarSign,
+        items: [
+          {
+            title: "History",
+            url: "/my-payroll/history",
+          },
+          {
+            title: "Summary",
+            url: "/my-payroll/summary",
           },
         ],
       });

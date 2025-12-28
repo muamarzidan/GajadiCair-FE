@@ -166,10 +166,6 @@ export default function AllowanceRulesPage() {
                   <p className="text-muted-foreground mb-4">
                     No allowance rules available.
                   </p>
-                  <Button onClick={handleAdd}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Allowance Rule
-                  </Button>
                 </div>
               ) : (
                 <div className="overflow-x-auto">

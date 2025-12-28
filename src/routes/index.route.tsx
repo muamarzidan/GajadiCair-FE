@@ -24,6 +24,9 @@ import EmployeeAttendanceSummaryPage from "@/pages/backoffice/attendance/Employe
 import AllowanceRulesPage from "@/pages/backoffice/payroll/AllowanceRulesPage";
 import DeductionRulesPage from "@/pages/backoffice/payroll/DeductionRulesPage";
 import PayrollSummaryPage from "@/pages/backoffice/payroll/PayrollSummaryPage";
+import EmployeePayrollSummaryPage from "@/pages/backoffice/payroll/EmployeePayrollSummaryPage";
+import EmployeePayrollHistoryPage from "@/pages/backoffice/payroll/EmployeePayrollHistoryPage";
+import EmployeePayrollDetailPage from "@/pages/backoffice/payroll/EmployeePayrollDetailPage";
 
 
 export const router = createBrowserRouter([
@@ -206,6 +209,30 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute requiredRole="company">
         <DeductionRulesPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/my-payroll/summary",
+    element: (
+      <ProtectedRoute requiredRole="employee">
+        <EmployeePayrollSummaryPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/my-payroll/history",
+    element: (
+      <ProtectedRoute requiredRole="employee">
+        <EmployeePayrollHistoryPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/my-payroll/detail/:payrollLogId",
+    element: (
+      <ProtectedRoute requiredRole="employee">
+        <EmployeePayrollDetailPage />
       </ProtectedRoute>
     ),
   },

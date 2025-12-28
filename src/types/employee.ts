@@ -17,6 +17,18 @@ export interface Employee {
   updated_at: string;
   deleted_at: string | null;
 }
+
+export interface AvailableSeats {
+  seat_taken: number;
+  seat_availability: number | null;
+  seat_capacity: number | null;
+}
+
+export interface GetAllEmployeesResponse {
+  employees: Employee[];
+  availableSeats: AvailableSeats;
+}
+
 export interface CreateEmployeeRequest {
   name: string;
   username: string;
