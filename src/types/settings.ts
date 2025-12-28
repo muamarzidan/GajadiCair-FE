@@ -8,6 +8,8 @@ export interface AttendanceSettings {
   attendance_open_time: string | null;
   attendance_close_time: string | null;
   work_start_time: string | null;
+  payroll_day_of_month: number | null;
+  recognize_with_gesture: boolean;
   attendance_tolerance_minutes: number | null;
   attendance_location_enabled: boolean;
   attendance_radius_meters: number | null;
@@ -21,6 +23,7 @@ export interface UpdateAttendanceSettingsRequest {
   work_start_time?: string;
   attendance_tolerance_minutes?: number;
   payroll_day_of_month?: number;
+  recognize_with_gesture?: boolean;
   attendance_location_enabled?: boolean;
   attendance_radius_meters?: number;
   latitude?: number;

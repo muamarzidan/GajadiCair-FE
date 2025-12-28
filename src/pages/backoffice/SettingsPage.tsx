@@ -55,6 +55,7 @@ const SettingsPage = () => {
   const [workStartTime, setWorkStartTime] = useState('');
   const [attendanceToleranceMinutes, setAttendanceToleranceMinutes] = useState<number>(0);
   const [payrollDayOfMonth, setPayrollDayOfMonth] = useState<number>(1);
+  const [recognizeWithGesture, setRecognizeWithGesture] = useState(false);
   const [attendanceLocationEnabled, setAttendanceLocationEnabled] = useState(false);
   const [attendanceRadiusMeters, setAttendanceRadiusMeters] = useState<number>(0);
   const [latitude, setLatitude] = useState<number>(0);
@@ -87,15 +88,15 @@ const SettingsPage = () => {
   const loadSettings = async () => {
     try {
       setFetchLoading(true);
-      // Load attendance settings
       const response = await attendanceSettingsApi.getSettings();
       if (response.statusCode === 200) {
-        // Populate form with existing data
         setMinimumHoursPerDay(response.data.minimum_hours_per_day || 0);
         setAttendanceOpenTime(extractTimeFromISO(response.data.attendance_open_time));
         setAttendanceCloseTime(extractTimeFromISO(response.data.attendance_close_time));
         setWorkStartTime(extractTimeFromISO(response.data.work_start_time));
         setAttendanceToleranceMinutes(response.data.attendance_tolerance_minutes || 0);
+        setPayrollDayOfMonth(response.data.payroll_day_of_month || 1);
+        setRecognizeWithGesture(response.data.recognize_with_gesture || false);
         setAttendanceLocationEnabled(response.data.attendance_location_enabled || false);
         setAttendanceRadiusMeters(response.data.attendance_radius_meters || 0);
         setLatitude(response.data.attendance_location.latitude || 0);
@@ -204,6 +205,7 @@ const SettingsPage = () => {
         work_start_time: workStartTime,
         attendance_tolerance_minutes: attendanceToleranceMinutes,
         payroll_day_of_month: payrollDayOfMonth,
+        recognize_with_gesture: recognizeWithGesture,
         attendance_location_enabled: attendanceLocationEnabled,
         attendance_radius_meters: attendanceRadiusMeters,
         latitude: latitude,
@@ -394,6 +396,21 @@ const SettingsPage = () => {
                     {/* <p className="text-xs text-muted-foreground">
                       Tanggal penggajian setiap bulan
                     </p> */}
+                  </div>
+
+                  {/* Recognize with Gesture */}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="recognize_gesture"
+                      checked={recognizeWithGesture}
+                      onCheckedChange={(checked) => setRecognizeWithGesture(checked as boolean)}
+                    />
+                    <Label
+                      htmlFor="recognize_gesture"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Enable Gesture Recognition for Attendance
+                    </Label>
                   </div>
                 </CardContent>
               </Card>
