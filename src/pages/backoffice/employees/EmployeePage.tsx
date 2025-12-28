@@ -50,8 +50,9 @@ const EmployeePage = () => {
       const response = await employeeApi.getAll();
       
       if (response.statusCode === 200) {
-        setEmployees(response.data);
-        setFilteredEmployees(response.data);
+        const employeesData = response.data.employees || [];
+        setEmployees(employeesData);
+        setFilteredEmployees(employeesData);
       };
     } catch (error) {
       console.error('Failed to fetch employees:', error);
@@ -103,6 +104,9 @@ const EmployeePage = () => {
     setSelectedEmployee(employee);
     setIsDeleteOpen(true);
   };
+
+  console.log('filteredEmployees', filteredEmployees);
+
 
   return (
     <SidebarProvider>
@@ -186,7 +190,7 @@ const EmployeePage = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredEmployees.map((employee) => (
+                  filteredEmployees?.map((employee) => (
                     <TableRow key={employee.employee_id}>
                       <TableCell className="font-medium">{employee.name}</TableCell>
                       <TableCell>{employee.username}</TableCell>

@@ -188,11 +188,7 @@ export default function DeductionRulesPage() {
               <p className="text-muted-foreground mb-4">
                 No deduction rules available
               </p>
-              <Button onClick={handleAdd}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add First Deduction Rule
-              </Button>
-            </div>
+              </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>

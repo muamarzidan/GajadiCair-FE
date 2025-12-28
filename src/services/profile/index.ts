@@ -11,7 +11,7 @@ export const companyProfileApi = {
     }
 
     const response = await apiClient.put<ApiResponse<UpdateProfileResponse>>(
-      '/api/v1/auth/company/profile',
+      '/api/v1/company/profile',
       formData,
       {
         headers: {
@@ -42,7 +42,7 @@ export const employeeProfileApi = {
     }
 
     const response = await apiClient.put<ApiResponse<UpdateProfileResponse>>(
-      '/api/v1/auth/employee/profile',
+      '/api/v1/employee/profile',
       formData,
       {
         headers: {

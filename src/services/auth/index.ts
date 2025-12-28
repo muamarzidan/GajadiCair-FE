@@ -170,12 +170,12 @@ export const authApi = {
   },
   
   getCompanyProfile: async (): Promise<ApiResponse<CompanyUser>> => {
-    const response = await apiClient.get('/api/v1/auth/company/profile');
+    const response = await apiClient.get('/api/v1/company/profile');
     return response.data;
   },
   
   getEmployeeProfile: async (): Promise<ApiResponse<EmployeeUser>> => {
-    const response = await apiClient.get('/api/v1/auth/employee/profile');
+    const response = await apiClient.get('/api/v1/employee/profile');
     return response.data;
   },
 };

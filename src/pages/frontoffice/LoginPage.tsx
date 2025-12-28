@@ -158,7 +158,7 @@ const LoginPage = () => {
         )}
         {loginMode === 'company' && (
           <>
-            <div className="relative my-4">
+            <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
               </div>
@@ -166,7 +166,9 @@ const LoginPage = () => {
                 <span className="bg-background px-2 text-muted-foreground">Or</span>
               </div>
             </div>
-            <GoogleLogin onSuccess={handleGoogleSuccess} onError={handleGoogleError} text="signin_with" shape="rectangular" size="large" width="100%" />
+            <div className='w-full'>
+              <GoogleLogin onSuccess={handleGoogleSuccess} onError={handleGoogleError} text="signin_with" shape="rectangular" size="large" width="100%" />
+            </div>
           </>
         )}
         <div className="mt-4 text-center space-y-2">

@@ -42,15 +42,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const userRole = user?.role || null;
 
   const checkAuth = async () => {
+    const accessToken = localStorage.getItem('access_token-gjdc');
+    
     try {
       setIsLoading(true);
       
-      const accessToken = localStorage.getItem('access_token-gjdc');
       if (!accessToken) {
         setUser(null);
         return;
       };
       
+      // Decode token to get role and basic info
       const payload = JSON.parse(atob(accessToken.split('.')[1]));
       const userRole: 'company' | 'employee' = payload.role || 'company';
       
@@ -62,14 +64,42 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (profileResponse.statusCode === 200) {
         const userData = { ...profileResponse.data, role: userRole };
         setUser(userData as User);
-      } else {
+      } else if (profileResponse.statusCode === 401 || profileResponse.statusCode === 403) {
+        // Only clear on auth errors (401/403)
         throw new Error('Invalid session');
       }
-    } catch (error) {
-      localStorage.removeItem('access_token-gjdc');
-      localStorage.removeItem('company_credentials-gjdc');
-      localStorage.removeItem('employee_credentials-gjdc');
-      setUser(null);
+    } catch (error: unknown) {
+      const err = error as { response?: { status?: number } };
+      
+      // Only clear on auth errors (401/403), not network errors
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        localStorage.removeItem('access_token-gjdc');
+        localStorage.removeItem('company_credentials-gjdc');
+        localStorage.removeItem('employee_credentials-gjdc');
+        setUser(null);
+      } else if (accessToken) {
+        // On network errors, try to keep user logged in with token data
+        try {
+          const payload = JSON.parse(atob(accessToken.split('.')[1]));
+          const userRole: 'company' | 'employee' = payload.role || 'company';
+          
+          // Set minimal user data from token to keep user logged in
+          setUser({
+            role: userRole,
+            name: payload.name || 'User',
+            email: payload.email || '',
+            username: payload.username || '',
+          } as User);
+          
+          console.warn('Using token data due to network error. Will retry on next navigation.');
+        } catch (tokenError) {
+          // If token is invalid/corrupted, clear everything
+          localStorage.removeItem('access_token-gjdc');
+          localStorage.removeItem('company_credentials-gjdc');
+          localStorage.removeItem('employee_credentials-gjdc');
+          setUser(null);
+        }
+      }
     } finally {
       setIsLoading(false);
     };

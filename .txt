@@ -1,6 +1,10 @@
-bikin design face recog
+available gesture list
+{{url}}/api/v1/employee/face-recognition/gesture-list
 
-payrool
+pakai sheet diapi employee
+
+bikin design face recog
+Ttmbaain iterasi 0-50
 
 ui dashboard admin/employee
 

@@ -3,12 +3,13 @@ import type { ApiResponse } from '@/types/api';
 import type { 
   Employee, 
   CreateEmployeeRequest, 
-  UpdateEmployeeRequest 
+  UpdateEmployeeRequest,
+  GetAllEmployeesResponse
 } from '@/types/employee';
 
 
 export const employeeApi = {
-  getAll: async (): Promise<ApiResponse<Employee[]>> => {
+  getAll: async (): Promise<ApiResponse<GetAllEmployeesResponse>> => {
     const response = await apiClient.get('/api/v1/company/employee');
     return response.data;
   },
