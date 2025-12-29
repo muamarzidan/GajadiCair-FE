@@ -1,14 +1,14 @@
-import { useState, useEffect } from 'react';
-import { Plus, Check, X, FileIcon, Filter } from 'lucide-react';
-import { format } from 'date-fns';
+import { useState, useEffect } from "react";
+import { Plus, Check, X, FileIcon, Filter } from "lucide-react";
+import { format } from "date-fns";
 
-import { employeeLeaveApplicationApi } from '@/services/leaveApplication';
-import type { LeaveApplication } from '@/types/leaveApplication';
-import { getImageUrl } from '@/utils';
-import { AppSidebar } from '@/components/app-sidebar';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { employeeLeaveApplicationApi } from "@/services/leaveApplication";
+import type { LeaveApplication } from "@/types/leaveApplication";
+import { getImageUrl } from "@/utils";
+import { AppSidebar } from "@/components/app-sidebar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -16,13 +16,13 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
-import { Separator } from '@/components/ui/separator';
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from '@/components/ui/sidebar';
+} from "@/components/ui/sidebar";
 import {
   Table,
   TableBody,
@@ -30,8 +30,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -39,36 +39,36 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 const EmployeeLeaveApplicationPage = () => {
   const [applications, setApplications] = useState<LeaveApplication[]>([]);
-  const [filteredApplications, setFilteredApplications] = useState<LeaveApplication[]>([]);
+  const [filteredApplications, setFilteredApplications] = useState<
+    LeaveApplication[]
+  >([]);
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [showDialog, setShowDialog] = useState(false);
-  
-  // Filter states
-  const [filterStartDate, setFilterStartDate] = useState('');
-  const [filterEndDate, setFilterEndDate] = useState('');
-  const [filterType, setFilterType] = useState<string>('ALL');
-  const [filterStatus, setFilterStatus] = useState<string>('ALL');
-
-  // Form state
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [reason, setReason] = useState('');
-  const [type, setType] = useState<'SICK' | 'LEAVE'>('SICK');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [filterStartDate, setFilterStartDate] = useState("");
+  const [filterEndDate, setFilterEndDate] = useState("");
+  const [dateFilterError, setDateFilterError] = useState("");
+  const [filterType, setFilterType] = useState<string>("ALL");
+  const [filterStatus, setFilterStatus] = useState<string>("ALL");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [reason, setReason] = useState("");
+  const [type, setType] = useState<"SICK" | "LEAVE">("SICK");
   const [attachment, setAttachment] = useState<File | null>(null);
 
   useEffect(() => {
@@ -80,6 +80,22 @@ const EmployeeLeaveApplicationPage = () => {
   }, [filterStartDate, filterEndDate, filterType, filterStatus, applications]);
 
   const filterApplications = () => {
+    // Validate date filter
+    if (filterStartDate && filterEndDate) {
+      const start = new Date(filterStartDate);
+      const end = new Date(filterEndDate);
+
+      if (start > end) {
+        setDateFilterError("Start date must be less than or equal to end date");
+        setFilteredApplications([]);
+        return;
+      } else {
+        setDateFilterError("");
+      }
+    } else {
+      setDateFilterError("");
+    }
+
     let filtered = [...applications];
 
     // Filter by date range
@@ -101,13 +117,15 @@ const EmployeeLeaveApplicationPage = () => {
     }
 
     // Filter by type
-    if (filterType !== 'ALL') {
+    if (filterType !== "ALL") {
       filtered = filtered.filter((app) => app.type === filterType);
     }
 
     // Filter by status
-    if (filterStatus !== 'ALL') {
-      filtered = filtered.filter((app) => app.status.toString() === filterStatus);
+    if (filterStatus !== "ALL") {
+      filtered = filtered.filter(
+        (app) => app.status.toString() === filterStatus
+      );
     }
 
     setFilteredApplications(filtered);
@@ -122,7 +140,7 @@ const EmployeeLeaveApplicationPage = () => {
         setFilteredApplications(response.data);
       }
     } catch (err: any) {
-      console.error('Failed to load applications:', err);
+      console.error("Failed to load applications:", err);
     } finally {
       setFetchLoading(false);
     }
@@ -132,37 +150,61 @@ const EmployeeLeaveApplicationPage = () => {
     const file = e.target.files?.[0];
     if (file) {
       // Validate file type
-      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      const allowedTypes = [
+        "application/pdf",
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/webp",
+      ];
       if (!allowedTypes.includes(file.type)) {
-        setError('Format file tidak valid. Hanya PDF, JPG, PNG, dan WEBP yang diperbolehkan.');
-        e.target.value = '';
+        setError(
+          "Format file tidak valid. Hanya PDF, JPG, PNG, dan WEBP yang diperbolehkan."
+        );
+        e.target.value = "";
         return;
       }
 
       // Validate file size (max 5MB)
       const maxSize = 5 * 1024 * 1024;
       if (file.size > maxSize) {
-        setError('Ukuran file terlalu besar. Maksimal 5MB.');
-        e.target.value = '';
+        setError("Ukuran file terlalu besar. Maksimal 5MB.");
+        e.target.value = "";
         return;
       }
 
-      setError('');
+      setError("");
       setAttachment(file);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!attachment) {
-      setError('Mohon upload file lampiran');
+      setError("Mohon upload file lampiran");
+      setFieldErrors({ attachment: "Lampiran wajib diisi" });
       return;
     }
 
+    // Validate date range
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+
+      if (start > end) {
+        setError("End date must be greater than or equal to start date");
+        setFieldErrors({
+          end_date: "End date must be greater than or equal to start date",
+        });
+        return;
+      }
+    }
+
     setLoading(true);
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
+    setFieldErrors({});
 
     try {
       const data = {
@@ -173,49 +215,66 @@ const EmployeeLeaveApplicationPage = () => {
         type,
       };
 
-      const response = await employeeLeaveApplicationApi.createLeaveApplication(data);
+      const response = await employeeLeaveApplicationApi.createLeaveApplication(
+        data
+      );
       if (response.statusCode === 200 || response.statusCode === 201) {
-        setSuccess('Pengajuan izin/sakit berhasil dikirim!');
+        setSuccess("Pengajuan izin/sakit berhasil dikirim!");
         setShowDialog(false);
         resetForm();
         await loadApplications();
       } else {
-        throw new Error(response.message || 'Gagal mengirim pengajuan');
+        throw new Error(response.message || "Gagal mengirim pengajuan");
       }
     } catch (err: any) {
-      let errorMessage = 'Terjadi kesalahan saat mengirim pengajuan';
-      
-      // Check for validation errors
+      console.error("Failed to create leave application:", err);
+
+      const newFieldErrors: Record<string, string> = {};
+
+      // Check if it's a validation error with detailed field errors
       if (err.response?.data?.errors?.validationErrors) {
         const validationErrors = err.response.data.errors.validationErrors;
-        errorMessage = validationErrors
-          .map((ve: any) => ve.messages.join(', '))
-          .join('; ');
-      } else if (err.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      } else if (err.message) {
-        errorMessage = err.message;
+
+        validationErrors.forEach(
+          (error: { field: string; messages: string[] }) => {
+            newFieldErrors[error.field] = error.messages.join(", ");
+          }
+        );
+
+        setFieldErrors(newFieldErrors);
+        setError("Please fix the validation errors in the form");
       }
-      
-      setError(errorMessage);
+      // Check if it's a regular error with a message
+      else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      }
+      // Fallback to generic error
+      else {
+        let errorMessage = "Terjadi kesalahan saat mengirim pengajuan";
+        if (err.message) {
+          errorMessage = err.message;
+        }
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const resetForm = () => {
-    setStartDate('');
-    setEndDate('');
-    setReason('');
-    setType('SICK');
+    setStartDate("");
+    setEndDate("");
+    setReason("");
+    setType("SICK");
     setAttachment(null);
+    setFieldErrors({});
   };
 
   const getStatusBadge = (status: 0 | 1 | 2) => {
     const config = {
-      0: { label: 'Pending', variant: 'secondary' as const },
-      1: { label: 'Approved', variant: 'default' as const },
-      2: { label: 'Rejected', variant: 'destructive' as const },
+      0: { label: "Pending", variant: "secondary" as const },
+      1: { label: "Approved", variant: "default" as const },
+      2: { label: "Rejected", variant: "destructive" as const },
     };
     const { label, variant } = config[status];
     return <Badge variant={variant}>{label}</Badge>;
@@ -223,9 +282,7 @@ const EmployeeLeaveApplicationPage = () => {
 
   const getTypeBadge = (type: string) => {
     return (
-      <Badge variant={type === 'SICK' ? 'outline' : 'secondary'}>
-        {type}
-      </Badge>
+      <Badge variant={type === "SICK" ? "outline" : "secondary"}>{type}</Badge>
     );
   };
 
@@ -255,7 +312,9 @@ const EmployeeLeaveApplicationPage = () => {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Leave Application</h1>
+              <h1 className="text-3xl font-bold tracking-tight">
+                Leave Application
+              </h1>
               <p className="text-muted-foreground">
                 Manage your leave and sick leave applications
               </p>
@@ -278,7 +337,12 @@ const EmployeeLeaveApplicationPage = () => {
                   {/* Type */}
                   <div className="space-y-2">
                     <Label htmlFor="type">Type</Label>
-                    <Select value={type} onValueChange={(value) => setType(value as 'SICK' | 'LEAVE')}>
+                    <Select
+                      value={type}
+                      onValueChange={(value) =>
+                        setType(value as "SICK" | "LEAVE")
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih tipe" />
                       </SelectTrigger>
@@ -290,7 +354,9 @@ const EmployeeLeaveApplicationPage = () => {
                   </div>
                   {/* Start Date */}
                   <div className="space-y-2">
-                    <Label htmlFor="start_date">Start Date</Label>
+                    <Label htmlFor="start_date">
+                      Start Date <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       id="start_date"
                       type="date"
@@ -298,10 +364,17 @@ const EmployeeLeaveApplicationPage = () => {
                       onChange={(e) => setStartDate(e.target.value)}
                       required
                     />
+                    {fieldErrors.start_date && (
+                      <p className="text-sm text-red-500">
+                        {fieldErrors.start_date}
+                      </p>
+                    )}
                   </div>
                   {/* End Date */}
                   <div className="space-y-2">
-                    <Label htmlFor="end_date">End Date</Label>
+                    <Label htmlFor="end_date">
+                      End Date <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       id="end_date"
                       type="date"
@@ -309,10 +382,20 @@ const EmployeeLeaveApplicationPage = () => {
                       onChange={(e) => setEndDate(e.target.value)}
                       required
                     />
+                    {fieldErrors.end_date && (
+                      <p className="text-sm text-red-500">
+                        {fieldErrors.end_date}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      End date must be greater than or equal to start date
+                    </p>
                   </div>
                   {/* Reason */}
                   <div className="space-y-2">
-                    <Label htmlFor="reason">Reason</Label>
+                    <Label htmlFor="reason">
+                      Reason <span className="text-red-500">*</span>
+                    </Label>
                     <Textarea
                       id="reason"
                       placeholder="Enter reason for leave/sick application"
@@ -321,10 +404,17 @@ const EmployeeLeaveApplicationPage = () => {
                       required
                       rows={4}
                     />
+                    {fieldErrors.reason && (
+                      <p className="text-sm text-red-500">
+                        {fieldErrors.reason}
+                      </p>
+                    )}
                   </div>
                   {/* Attachment */}
                   <div className="space-y-2">
-                    <Label htmlFor="attachment">Attachment (Supporting Document)</Label>
+                    <Label htmlFor="attachment">
+                      Attachment <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       id="attachment"
                       type="file"
@@ -332,6 +422,11 @@ const EmployeeLeaveApplicationPage = () => {
                       onChange={handleFileChange}
                       required
                     />
+                    {fieldErrors.attachment && (
+                      <p className="text-sm text-red-500">
+                        {fieldErrors.attachment}
+                      </p>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       Format: PDF, JPG, PNG, WEBP. Max 5MB
                     </p>
@@ -345,11 +440,15 @@ const EmployeeLeaveApplicationPage = () => {
                   )}
 
                   <div className="flex justify-end gap-3">
-                    <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowDialog(false)}
+                    >
                       Cancel
                     </Button>
                     <Button type="submit" disabled={loading}>
-                      {loading ? 'Submitting...' : 'Submit Application'}
+                      {loading ? "Submitting..." : "Submit Application"}
                     </Button>
                   </div>
                 </form>
@@ -364,57 +463,63 @@ const EmployeeLeaveApplicationPage = () => {
             </div>
           )}
           {/* Filters */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-            </div>
-            
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-8 w-full sm:w-auto flex-wrap">
-              {/* Date Range */}
-              <div className="flex items-center gap-2">
-                <Input
-                  type="date"
-                  value={filterStartDate}
-                  onChange={(e) => setFilterStartDate(e.target.value)}
-                  className="w-[160px]"
-                  placeholder="Start date"
-                />
-                <span className="text-muted-foreground">to</span>
-                <Input
-                  type="date"
-                  value={filterEndDate}
-                  onChange={(e) => setFilterEndDate(e.target.value)}
-                  className="w-[160px]"
-                  placeholder="End date"
-                />
+            <div className="flex flex-col gap-1">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                </div>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-8 w-full sm:w-auto flex-wrap">
+                    {/* Date Range */}
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="date"
+                          value={filterStartDate}
+                          onChange={(e) => setFilterStartDate(e.target.value)}
+                          className="w-[160px]"
+                          placeholder="Start date"
+                        />
+                        <span className="text-muted-foreground">to</span>
+                        <Input
+                          type="date"
+                          value={filterEndDate}
+                          onChange={(e) => setFilterEndDate(e.target.value)}
+                          className="w-[160px]"
+                          placeholder="End date"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {/* Type Filter */}
+                      <Select value={filterType} onValueChange={setFilterType}>
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue placeholder="Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">All Types</SelectItem>
+                          <SelectItem value="SICK">Sick</SelectItem>
+                          <SelectItem value="LEAVE">Leave</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {/* Status Filter */}
+                      <Select value={filterStatus} onValueChange={setFilterStatus}>
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">All Status</SelectItem>
+                          <SelectItem value="0">Pending</SelectItem>
+                          <SelectItem value="1">Approved</SelectItem>
+                          <SelectItem value="2">Rejected</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
               </div>
-              <div className="flex items-center gap-2">
-                {/* Type Filter */}
-                <Select value={filterType} onValueChange={setFilterType}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">All Types</SelectItem>
-                    <SelectItem value="SICK">Sick</SelectItem>
-                    <SelectItem value="LEAVE">Leave</SelectItem>
-                  </SelectContent>
-                </Select>
-                {/* Status Filter */}
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">All Status</SelectItem>
-                    <SelectItem value="0">Pending</SelectItem>
-                    <SelectItem value="1">Approved</SelectItem>
-                    <SelectItem value="2">Rejected</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {dateFilterError && (
+                <p className="text-xs text-red-600">{dateFilterError}</p>
+              )}
             </div>
-          </div>
           {/* Applications Table */}
           {fetchLoading ? (
             <div className="text-center py-8">
@@ -423,72 +528,82 @@ const EmployeeLeaveApplicationPage = () => {
             </div>
           ) : (
             <div className="rounded-md border">
-              {
-                fetchLoading ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                    <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
+              {fetchLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Loading...
+                  </p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Reason</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Attachment</TableHead>
+                      <TableHead>Created</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredApplications.length === 0 ? (
                       <TableRow>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Reason</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Attachment</TableHead>
-                        <TableHead>Created</TableHead>
+                        <TableCell
+                          colSpan={6}
+                          className="text-center text-muted-foreground"
+                        >
+                          {filterStartDate ||
+                          filterEndDate ||
+                          filterType !== "ALL" ||
+                          filterStatus !== "ALL"
+                            ? "No applications found matching your filters"
+                            : "Belum ada pengajuan"}
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredApplications.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={6} className="text-center text-muted-foreground">
-                            {filterStartDate || filterEndDate || filterType !== 'ALL' || filterStatus !== 'ALL'
-                              ? 'No applications found matching your filters'
-                              : 'Belum ada pengajuan'}
+                    ) : (
+                      filteredApplications.map((app) => (
+                        <TableRow key={app.employee_leave_application_id}>
+                          <TableCell>{getTypeBadge(app.type)}</TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {format(new Date(app.start_date), "dd MMM yyyy")} -{" "}
+                            {format(new Date(app.end_date), "dd MMM yyyy")}
+                          </TableCell>
+                          <TableCell className="max-w-[200px] truncate">
+                            {app.reason}
+                          </TableCell>
+                          <TableCell>{getStatusBadge(app.status)}</TableCell>
+                          <TableCell>
+                            {app.attachment_uri && (
+                              <a
+                                href={getImageUrl(app.attachment_uri)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline flex items-center gap-1"
+                              >
+                                <FileIcon className="h-4 w-4" />
+                                Open
+                              </a>
+                            )}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {format(new Date(app.created_at), "dd MMM yyyy")}
                           </TableCell>
                         </TableRow>
-                      ) : (
-                        filteredApplications.map((app) => (
-                          <TableRow key={app.employee_leave_application_id}>
-                            <TableCell>{getTypeBadge(app.type)}</TableCell>
-                            <TableCell className="whitespace-nowrap">
-                              {format(new Date(app.start_date), 'dd MMM yyyy')} - {format(new Date(app.end_date), 'dd MMM yyyy')}
-                            </TableCell>
-                            <TableCell className="max-w-[200px] truncate">{app.reason}</TableCell>
-                            <TableCell>{getStatusBadge(app.status)}</TableCell>
-                            <TableCell>
-                              {app.attachment_uri && (
-                                <a
-                                  href={getImageUrl(app.attachment_uri)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-primary hover:underline flex items-center gap-1"
-                                >
-                                  <FileIcon className="h-4 w-4" />
-                                  Open
-                                </a>
-                              )}
-                            </TableCell>
-                            <TableCell className="whitespace-nowrap">
-                              {format(new Date(app.created_at), 'dd MMM yyyy')}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                )
-              }
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              )}
             </div>
           )}
-          
+
           {/* Results Counter */}
           {!fetchLoading && filteredApplications.length > 0 && (
             <div className="text-sm text-muted-foreground">
-              Showing {filteredApplications.length} of {applications.length} applications
+              Showing {filteredApplications.length} of {applications.length}{" "}
+              applications
             </div>
           )}
         </div>

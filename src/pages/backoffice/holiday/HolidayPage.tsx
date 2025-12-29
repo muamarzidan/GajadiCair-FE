@@ -38,6 +38,7 @@ const HolidayPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [startDateFilter, setStartDateFilter] = useState("");
   const [endDateFilter, setEndDateFilter] = useState("");
+  const [dateFilterError, setDateFilterError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -67,6 +68,22 @@ const HolidayPage = () => {
 
   useEffect(() => {
     let filtered = [...holidays];
+
+    // Validate date filter
+    if (startDateFilter && endDateFilter) {
+      const startDate = new Date(startDateFilter);
+      const endDate = new Date(endDateFilter);
+      
+      if (startDate > endDate) {
+        setDateFilterError('Start date must be less than or equal to end date');
+        setFilteredHolidays([]);
+        return;
+      } else {
+        setDateFilterError('');
+      }
+    } else {
+      setDateFilterError('');
+    }
 
     if (searchQuery.trim() !== "") {
       const query = searchQuery.toLowerCase();
@@ -120,7 +137,7 @@ const HolidayPage = () => {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Holiday</BreadcrumbPage>
+                  <BreadcrumbPage>Holiday Management</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
@@ -129,50 +146,55 @@ const HolidayPage = () => {
         <div className="flex flex-1 flex-col gap-6 p-6">
           {/* Header */}
           <div className="flex flex-col gap-1">
-            <h1 className="text-3xl font-bold tracking-tight">Holiday</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Holiday Management</h1>
             <p className="text-muted-foreground">
               Manage your company custom holidays
             </p>
           </div>
           {/* Search & Filters */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex flex-col sm:flex-row gap-8 flex-1 w-full">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search by description..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center">
-                  <Filter className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="flex gap-2">
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row gap-8 flex-1 w-full">
+                <div className="relative flex-1 max-w-sm">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    type="date"
-                    placeholder="Start Date"
-                    value={startDateFilter}
-                    onChange={(e) => setStartDateFilter(e.target.value)}
-                    className="w-[160px]"
-                  />
-                  <Input
-                    type="date"
-                    placeholder="End Date"
-                    value={endDateFilter}
-                    onChange={(e) => setEndDateFilter(e.target.value)}
-                    className="w-[160px]"
+                    type="text"
+                    placeholder="Search by description..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
                   />
                 </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center">
+                    <Filter className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      type="date"
+                      placeholder="Start Date"
+                      value={startDateFilter}
+                      onChange={(e) => setStartDateFilter(e.target.value)}
+                      className="w-[160px]"
+                    />
+                    <Input
+                      type="date"
+                      placeholder="End Date"
+                      value={endDateFilter}
+                      onChange={(e) => setEndDateFilter(e.target.value)}
+                      className="w-[160px]"
+                    />
+                  </div>
+                </div>
               </div>
+              <Button onClick={handleAdd} className="gap-2 w-full sm:w-auto">
+                <Plus className="h-4 w-4" />
+                Add Holiday
+              </Button>
             </div>
-            <Button onClick={handleAdd} className="gap-2 w-full sm:w-auto">
-              <Plus className="h-4 w-4" />
-              Add Holiday
-            </Button>
+            {dateFilterError && (
+              <p className="text-xs text-red-600">{dateFilterError}</p>
+            )}
           </div>
           {/* Table */}
           <div className="rounded-md border">

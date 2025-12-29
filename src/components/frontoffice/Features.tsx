@@ -29,8 +29,8 @@ const features = [
   },
   {
     icon: Zap,
-    title: "Real-time Notifications",
-    description: "Automatic email notifications for admins when payroll is completed or deductions occur. Employees receive payslip alerts.",
+    title: "Custom Holiday",
+    description: "Create and manage company-specific holidays that automatically reflect in attendance and payroll systems.",
   },
 ];
 

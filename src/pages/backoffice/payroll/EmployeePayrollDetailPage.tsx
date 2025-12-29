@@ -113,7 +113,7 @@ export default function EmployeePayrollDetailPage() {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Detail Pembayaran</BreadcrumbPage>
+                  <BreadcrumbPage>Payment Details</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
@@ -131,10 +131,7 @@ export default function EmployeePayrollDetailPage() {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div>
-                <h1 className="text-3xl font-bold">Detail Pembayaran</h1>
-                <p className="text-muted-foreground mt-1">
-                  Rincian pembayaran gaji
-                </p>
+                <h1 className="text-3xl font-bold">Payment Details</h1>
               </div>
             </div>
             {payrollDetail?.pdf_uri && (
@@ -163,12 +160,12 @@ export default function EmployeePayrollDetailPage() {
               {/* Summary Card */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Informasi Pembayaran</CardTitle>
+                  <CardTitle>Payment Information</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">Nama Karyawan</p>
+                      <p className="text-sm text-muted-foreground">Employee Name</p>
                       <p className="text-lg font-semibold">
                         {payrollDetail.employee.name}
                       </p>
@@ -179,7 +176,7 @@ export default function EmployeePayrollDetailPage() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">
-                        Tanggal Pembayaran
+                        Payment Date
                       </p>
                       <p className="text-lg font-semibold">
                         {formatDate(payrollDetail.payroll_date)}
@@ -187,7 +184,7 @@ export default function EmployeePayrollDetailPage() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">
-                        Total Pembayaran
+                        Total Amount
                       </p>
                       <p className="text-2xl font-bold text-blue-600">
                         {formatCurrency(payrollDetail.amount)}
@@ -200,7 +197,7 @@ export default function EmployeePayrollDetailPage() {
               <div className="grid gap-4 md:grid-cols-3">
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardDescription>Gaji Pokok</CardDescription>
+                    <CardDescription>Base Salary</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-blue-600">
@@ -210,7 +207,7 @@ export default function EmployeePayrollDetailPage() {
                 </Card>
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardDescription>Total Tunjangan</CardDescription>
+                    <CardDescription>Total Allowances</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-green-600">

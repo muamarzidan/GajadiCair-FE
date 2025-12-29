@@ -38,6 +38,7 @@ const AttendanceSummaryPage = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [error, setError] = useState('');
+  const [dateFilterError, setDateFilterError] = useState('');
 
   const fetchSummary = async (start?: string, end?: string) => {
     try {
@@ -70,12 +71,19 @@ const AttendanceSummaryPage = () => {
   }, []);
 
   const handleFilter = () => {
+    // Validate date range
+    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+      setDateFilterError('Start date cannot be greater than end date');
+      return;
+    }
+    setDateFilterError('');
     fetchSummary(startDate, endDate);
   };
 
   const handleReset = () => {
     setStartDate('');
     setEndDate('');
+    setDateFilterError('');
     fetchSummary();
   };
 
@@ -148,6 +156,13 @@ const AttendanceSummaryPage = () => {
             <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-center gap-2 text-red-700">
               <AlertCircle className="h-4 w-4" />
               <span className="text-sm">{error}</span>
+            </div>
+          )}
+          {/* Date Filter Error */}
+          {dateFilterError && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-center gap-2 text-red-700">
+              <AlertCircle className="h-4 w-4" />
+              <span className="text-sm">{dateFilterError}</span>
             </div>
           )}
           {/* Filters */}

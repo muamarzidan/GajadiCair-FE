@@ -133,7 +133,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: FileText,
         items: [
           {
-            title: "Overview",
+            title: "Manage",
             url: "/application-management",
           },
         ],
@@ -178,7 +178,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             url: "/holiday-preview",
           },
           {
-            title: "Manage Holidays",
+            title: "Manage",
             url: "/holiday",
           },
         ],

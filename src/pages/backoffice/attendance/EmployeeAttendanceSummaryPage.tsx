@@ -230,7 +230,6 @@ const EmployeeAttendanceSummaryPage = () => {
               Attendance Summary
             </h1>
           </div>
-
           {/* Error Message */}
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-center gap-2 text-red-700">
@@ -238,7 +237,6 @@ const EmployeeAttendanceSummaryPage = () => {
               <span className="text-sm">{error}</span>
             </div>
           )}
-
           {/* Calendar Card */}
           <Card className="!shadow-none">
             <CardHeader>
