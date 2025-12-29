@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 
@@ -7,8 +7,21 @@ import { Button } from "@/components/ui/button";
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-transparent">
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      isScrolled ? "bg-white shadow-md" : "bg-transparent"
+    }`}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -17,12 +30,16 @@ export const Navbar = () => {
               <img
                 src="/icons/logo-gajadicair-white.svg"
                 alt="Logo"
-                className="object-contain h-10"
+                className={`object-contain h-10 transition-all duration-300 ${
+                  isScrolled ? "invert" : ""
+                }`}
               />
             </Link>
           </div>
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8 text-gray-50">
+          <div className={`hidden md:flex items-center gap-8 transition-colors duration-300 ${
+            isScrolled ? "text-gray-900" : "text-gray-50"
+          }`}>
             <a href="#features" className="hover:text-gray-500 transition-colors duration-300">
               Feature
             </a>

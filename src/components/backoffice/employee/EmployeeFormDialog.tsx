@@ -120,7 +120,7 @@ export const EmployeeFormDialog = ({
     }
 
     if (!formData.bank_id.trim()) {
-      newErrors.bank_id = 'Bank ID is required';
+      newErrors.bank_id = 'Bank Name is required';
     }
 
     if (!formData.bank_account_number.trim()) {
@@ -283,7 +283,7 @@ export const EmployeeFormDialog = ({
           {/* Bank Id with select  */}
           <div className="space-y-2">
             <Label htmlFor="bank_id">
-              Bank ID <span className="text-red-500">*</span>
+              Bank Name <span className="text-red-500">*</span>
             </Label>
             <Select
               value={formData.bank_id}

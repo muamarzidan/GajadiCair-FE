@@ -26,12 +26,26 @@ export const attendanceApi = {
   checkInFace: async (
     file: File,
     latitude: number,
-    longitude: number
+    longitude: number,
+    gestures?: string[],
+    hands?: string[]
   ): Promise<ApiResponse<CheckInResponse>> => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('latitude', latitude.toString());
     formData.append('longitude', longitude.toString());
+
+    // Add gestures and hands if provided
+    if (gestures && gestures.length > 0) {
+      gestures.forEach((gesture) => {
+        formData.append('gesture[]', gesture);
+      });
+    }
+    if (hands && hands.length > 0) {
+      hands.forEach((hand) => {
+        formData.append('hand[]', hand);
+      });
+    }
 
     const response = await apiClient.post<ApiResponse<CheckInResponse>>(
       '/api/v1/employee/attendance/check-in-face',
@@ -47,12 +61,26 @@ export const attendanceApi = {
   checkOutFace: async (
     file: File,
     latitude: number,
-    longitude: number
+    longitude: number,
+    gestures?: string[],
+    hands?: string[]
   ): Promise<ApiResponse<CheckOutResponse>> => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('latitude', latitude.toString());
     formData.append('longitude', longitude.toString());
+
+    // Add gestures and hands if provided
+    if (gestures && gestures.length > 0) {
+      gestures.forEach((gesture) => {
+        formData.append('gesture[]', gesture);
+      });
+    }
+    if (hands && hands.length > 0) {
+      hands.forEach((hand) => {
+        formData.append('hand[]', hand);
+      });
+    }
 
     const response = await apiClient.post<ApiResponse<CheckOutResponse>>(
       '/api/v1/employee/attendance/check-out-face',

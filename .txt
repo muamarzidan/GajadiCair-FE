@@ -1,12 +1,4 @@
-available gesture list
-{{url}}/api/v1/employee/face-recognition/gesture-list
-
-
-bikin design face recog
 Ttmbaain iterasi 0-50
-
-ui dashboard admin/employee
-
 
 
 

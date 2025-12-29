@@ -12,3 +12,15 @@ export interface ICheckFaceResponse {
 export interface ICheckFaceRequest {
   image: File;
 };
+
+export interface GestureListResponse {
+  allowed_gestures: string[];
+  total: number;
+}
+
+export type HandType = 'Left' | 'Right';
+
+export interface GestureSelection {
+  gesture: string;
+  hand: HandType;
+}

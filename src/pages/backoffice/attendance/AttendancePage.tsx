@@ -9,6 +9,8 @@ import {
   type CheckInEligibility,
   type CheckOutEligibility
 } from '@/services/attendance';
+import { faceRecognitionApi } from '@/services/faceRecognition';
+import type { GestureSelection, HandType } from '@/types/faceRecognition';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,6 +37,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 
 const AttendancePage = () => {
@@ -52,11 +56,19 @@ const AttendancePage = () => {
   const [geoError, setGeoError] = useState<string>('');
   const [checkInEligibility, setCheckInEligibility] = useState<CheckInEligibility | null>(null);
   const [checkOutEligibility, setCheckOutEligibility] = useState<CheckOutEligibility | null>(null);
+  
+  // Gesture states
+  const [allowedGestures, setAllowedGestures] = useState<string[]>([]);
+  const [gestureRequired, setGestureRequired] = useState(false);
+  const [gestureSelections, setGestureSelections] = useState<GestureSelection[]>([
+    { gesture: '', hand: 'Left' },
+  ]);
 
   useEffect(() => {
     loadTodayStatus();
     loadAttendanceHistory();
     loadEligibility();
+    loadGestureList();
   }, []);
   // Cleanup camera on unmount
   useEffect(() => {
@@ -104,6 +116,20 @@ const AttendancePage = () => {
       console.error('Failed to load eligibility:', err);
     }
   };
+
+  const loadGestureList = async () => {
+    try {
+      const response = await faceRecognitionApi.getGestureList();
+      if (response.statusCode === 200) {
+        setAllowedGestures(response.data.allowed_gestures);
+        // If there are gestures, it means gesture is required
+        setGestureRequired(response.data.total > 0);
+      }
+    } catch (err) {
+      console.error('Failed to load gesture list:', err);
+    }
+  };
+
   const startCamera = async () => {
     try {
       setError('');
@@ -250,8 +276,37 @@ const AttendancePage = () => {
         type: 'image/jpeg',
       });
 
+      // Prepare gesture data if required
+      let gestures: string[] | undefined;
+      let hands: string[] | undefined;
+
+      if (gestureRequired && gestureSelections.length > 0) {
+        // Filter out empty selections
+        const validSelections = gestureSelections.filter(s => s.gesture && s.hand);
+        
+        if (validSelections.length === 0) {
+          throw new Error('Silakan pilih gesture dan hand yang diperlukan');
+        }
+
+        // Check for duplicate hands
+        if (validSelections.length === 2) {
+          if (validSelections[0].hand === validSelections[1].hand) {
+            throw new Error('Tidak boleh memilih hand yang sama untuk kedua gesture');
+          }
+        }
+
+        gestures = validSelections.map(s => s.gesture);
+        hands = validSelections.map(s => s.hand);
+      }
+
       if (checkType === 'in') {
-        const response = await attendanceApi.checkInFace(file, coords.latitude, coords.longitude);
+        const response = await attendanceApi.checkInFace(
+          file, 
+          coords.latitude, 
+          coords.longitude,
+          gestures,
+          hands
+        );
         if (response.statusCode === 200 || response.statusCode === 201) {
           setSuccess('Check-in berhasil!');
           await loadTodayStatus();
@@ -262,7 +317,13 @@ const AttendancePage = () => {
           throw new Error(response.message || 'Check-in gagal');
         }
       } else {
-        const response = await attendanceApi.checkOutFace(file, coords.latitude, coords.longitude);
+        const response = await attendanceApi.checkOutFace(
+          file, 
+          coords.latitude, 
+          coords.longitude,
+          gestures,
+          hands
+        );
         if (response.statusCode === 200 || response.statusCode === 201) {
           setSuccess('Check-out berhasil!');
           await loadTodayStatus();
@@ -291,15 +352,43 @@ const AttendancePage = () => {
       setStream(null);
     }
     setShowCamera(false);
+    // Reset gesture selections when closing camera
+    setGestureSelections([{ gesture: '', hand: 'Left' }]);
   };
+
   const handleCheckIn = async () => {
     setCheckType('in');
+    setGestureSelections([{ gesture: '', hand: 'Left' }]);
     await startCamera();
   };
+
   const handleCheckOut = async () => {
     setCheckType('out');
+    setGestureSelections([{ gesture: '', hand: 'Left' }]);
     await startCamera();
   };
+  
+  // Gesture selection helpers
+  const addGestureSelection = () => {
+    if (gestureSelections.length < 2) {
+      const usedHand = gestureSelections[0].hand;
+      const newHand: HandType = usedHand === 'Left' ? 'Right' : 'Left';
+      setGestureSelections([...gestureSelections, { gesture: '', hand: newHand }]);
+    }
+  };
+  
+  const removeGestureSelection = (index: number) => {
+    if (gestureSelections.length > 1) {
+      setGestureSelections(gestureSelections.filter((_, i) => i !== index));
+    }
+  };
+  
+  const updateGestureSelection = (index: number, field: 'gesture' | 'hand', value: string) => {
+    const updated = [...gestureSelections];
+    updated[index] = { ...updated[index], [field]: value as HandType };
+    setGestureSelections(updated);
+  };
+  
   const getStatusBadge = (status: string) => {
     const statusUpper = status.toUpperCase();
     const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
@@ -342,7 +431,6 @@ const AttendancePage = () => {
             </Breadcrumb>
           </div>
         </header>
-
         <div className="flex flex-1 flex-col gap-6 p-6">
           {/* Header */}
           <div className="flex items-center justify-between">
@@ -367,7 +455,7 @@ const AttendancePage = () => {
             </div>
           )}
           {/* Today's Status Card */}
-          <Card>
+          <Card className="!shadow-none"> 
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
@@ -441,7 +529,7 @@ const AttendancePage = () => {
           </Card>
           {/* Camera Modal */}
           {showCamera && (
-            <Card className="border-primary">
+            <Card className="!shadow-none">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>
@@ -480,6 +568,80 @@ const AttendancePage = () => {
                   </div>
                 )}
 
+                {/* Gesture Selection - Only show if required */}
+                {gestureRequired && allowedGestures.length > 0 && (
+                  <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-semibold">Gesture Recognition</Label>
+                      {gestureSelections.length < 2 && (
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm"
+                          onClick={addGestureSelection}
+                        >
+                          + Add Gesture
+                        </Button>
+                      )}
+                    </div>
+                    
+                    {gestureSelections.map((selection, index) => (
+                      <div key={index} className="flex gap-2 items-end">
+                        <div className="flex-1">
+                          <Label htmlFor={`gesture-${index}`} className="text-xs mb-1">
+                            Gesture {index + 1}
+                          </Label>
+                          <Select
+                            value={selection.gesture}
+                            onValueChange={(value) => updateGestureSelection(index, 'gesture', value)}
+                          >
+                            <SelectTrigger id={`gesture-${index}`}>
+                              <SelectValue placeholder="Select gesture" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {allowedGestures.map((gesture) => (
+                                <SelectItem key={gesture} value={gesture}>
+                                  {gesture}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div className="w-32">
+                          <Label htmlFor={`hand-${index}`} className="text-xs mb-1">
+                            Hand
+                          </Label>
+                          <Select
+                            value={selection.hand}
+                            onValueChange={(value) => updateGestureSelection(index, 'hand', value)}
+                          >
+                            <SelectTrigger id={`hand-${index}`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Left">Left</SelectItem>
+                              <SelectItem value="Right">Right</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        {gestureSelections.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeGestureSelection(index)}
+                            className="mb-0"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <div className="flex gap-3">
                   <Button
                     onClick={captureAndSubmit}
@@ -504,7 +666,7 @@ const AttendancePage = () => {
             </Card>
           )}
           {/* Attendance History */}
-          <Card>
+          <Card className="!shadow-none">
             <CardHeader>
               <CardTitle>Your past attendance records</CardTitle>
             </CardHeader>
