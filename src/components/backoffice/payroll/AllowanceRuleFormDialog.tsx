@@ -52,10 +52,12 @@ export function AllowanceRuleFormDialog({
   const [isActive, setIsActive] = useState(rule?.is_active ?? true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setFieldErrors({});
     setIsLoading(true);
 
     try {
@@ -81,8 +83,30 @@ export function AllowanceRuleFormDialog({
       onSuccess();
       onOpenChange(false);
       resetForm();
-    } catch (err) {
-      setError(getErrorMessage(err));
+    } catch (err: any) {
+      console.error('Failed to save allowance rule:', err);
+      
+      const newFieldErrors: Record<string, string> = {};
+      
+      // Check if it's a validation error with detailed field errors
+      if (err.response?.data?.errors?.validationErrors) {
+        const validationErrors = err.response.data.errors.validationErrors;
+        
+        validationErrors.forEach((error: { field: string; messages: string[] }) => {
+          newFieldErrors[error.field] = error.messages.join(', ');
+        });
+        
+        setFieldErrors(newFieldErrors);
+        setError('Please fix the validation errors in the form');
+      } 
+      // Check if it's a regular error with a message
+      else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } 
+      // Fallback to generic error
+      else {
+        setError(getErrorMessage(err));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -95,6 +119,7 @@ export function AllowanceRuleFormDialog({
     setFixedAmount('');
     setIsActive(true);
     setError('');
+    setFieldErrors({});
   };
 
   return (
@@ -108,12 +133,12 @@ export function AllowanceRuleFormDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {rule ? 'Edit Tunjangan' : 'Tambah Tunjangan'}
+            {rule ? 'Edit Allowance' : 'Add New Allowance'}
           </DialogTitle>
           <DialogDescription>
             {rule
-              ? 'Ubah detail tunjangan di bawah ini'
-              : 'Isi detail tunjangan baru di bawah ini'}
+              ? 'Update allowance details below'
+              : 'Fill in new allowance details below'}
           </DialogDescription>
         </DialogHeader>
 
@@ -124,21 +149,24 @@ export function AllowanceRuleFormDialog({
                 {error}
               </div>
             )}
-
             <div className="space-y-2">
-              <Label htmlFor="name">Nama Tunjangan</Label>
+              <Label htmlFor="name">
+                Allowance Name <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Contoh: Tunjangan Transport"
+                placeholder="e.g., Transport Allowance"
                 required
                 disabled={isLoading}
               />
+              {fieldErrors.name && (
+                <p className="text-sm text-red-500">{fieldErrors.name}</p>
+              )}
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="type">Tipe</Label>
+              <Label htmlFor="type">Type</Label>
               <Select
                 value={allowanceType}
                 onValueChange={(value: AllowanceType) =>
@@ -150,17 +178,18 @@ export function AllowanceRuleFormDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="percentage">Persentase (%)</SelectItem>
+                  <SelectItem value="percentage">Percentage (%)</SelectItem>
                   <SelectItem value="fixed_amount">
-                    Nominal Tetap (Rp)
+                    Fixed Amount (Rp)
                   </SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
             {allowanceType === 'percentage' ? (
               <div className="space-y-2">
-                <Label htmlFor="percentage">Persentase (%)</Label>
+                <Label htmlFor="percentage">
+                  Percentage (%) <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="percentage"
                   type="number"
@@ -173,10 +202,15 @@ export function AllowanceRuleFormDialog({
                   required
                   disabled={isLoading}
                 />
+                {fieldErrors.percentage && (
+                  <p className="text-sm text-red-500">{fieldErrors.percentage}</p>
+                )}
               </div>
             ) : (
               <div className="space-y-2">
-                <Label htmlFor="fixedAmount">Nominal (Rp)</Label>
+                <Label htmlFor="fixedAmount">
+                  Fixed Amount (Rp) <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="fixedAmount"
                   type="number"
@@ -184,13 +218,15 @@ export function AllowanceRuleFormDialog({
                   step="1000"
                   value={fixedAmount}
                   onChange={(e) => setFixedAmount(e.target.value)}
-                  placeholder="Contoh: 500000"
+                  placeholder="e.g., 500000"
                   required
                   disabled={isLoading}
                 />
+                {fieldErrors.fixed_amount && (
+                  <p className="text-sm text-red-500">{fieldErrors.fixed_amount}</p>
+                )}
               </div>
             )}
-
             {rule && (
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
@@ -203,14 +239,13 @@ export function AllowanceRuleFormDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Aktif</SelectItem>
-                    <SelectItem value="inactive">Tidak Aktif</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             )}
           </div>
-
           <DialogFooter>
             <Button
               type="button"
@@ -221,11 +256,11 @@ export function AllowanceRuleFormDialog({
               Batal
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Menyimpan...' : rule ? 'Simpan' : 'Tambah'}
+              {isLoading ? 'Saving...' : rule ? 'Save' : 'Add'}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
-}
+};

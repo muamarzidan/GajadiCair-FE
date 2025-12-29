@@ -49,6 +49,7 @@ const SettingsPage = () => {
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [subscriptionLevel, setSubscriptionLevel] = useState<number>(0);
   // Form state
   const [minimumHoursPerDay, setMinimumHoursPerDay] = useState<number>(0);
@@ -181,6 +182,7 @@ const SettingsPage = () => {
     setLoading(true);
     setError('');
     setSuccess('');
+    setFieldErrors({});
 
     // Validasi input
     if (minimumHoursPerDay < 0) {
@@ -200,6 +202,14 @@ const SettingsPage = () => {
     }
     if (attendanceRadiusMeters < 0) {
       setError('Radius absensi tidak boleh negatif');
+      setLoading(false);
+      return;
+    }
+    
+    // Validasi minimal 1 working day dipilih
+    const hasAtLeastOneWorkingDay = Object.values(workingDay).some(day => day === true);
+    if (!hasAtLeastOneWorkingDay) {
+      setError('Minimal harus ada 1 hari kerja yang dipilih');
       setLoading(false);
       return;
     }
@@ -233,8 +243,30 @@ const SettingsPage = () => {
 
       setSuccess('Settings berhasil diupdate!');
       await loadSettings();
-    } catch (err) {
-      setError(getErrorMessage(err, 'Terjadi kesalahan saat update settings'));
+    } catch (err: any) {
+      console.error('Failed to save settings:', err);
+      
+      const newFieldErrors: Record<string, string> = {};
+      
+      // Check if it's a validation error with detailed field errors
+      if (err.response?.data?.errors?.validationErrors) {
+        const validationErrors = err.response.data.errors.validationErrors;
+        
+        validationErrors.forEach((error: { field: string; messages: string[] }) => {
+          newFieldErrors[error.field] = error.messages.join(', ');
+        });
+        
+        setFieldErrors(newFieldErrors);
+        setError('Please fix the validation errors in the form');
+      } 
+      // Check if it's a regular error with a message
+      else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } 
+      // Fallback to generic error
+      else {
+        setError(getErrorMessage(err, 'Terjadi kesalahan saat update settings'));
+      }
     } finally {
       setLoading(false);
     }
@@ -330,11 +362,13 @@ const SettingsPage = () => {
                       onChange={(e) => setMinimumHoursPerDay(Math.max(0, Number(e.target.value)))}
                       required
                     />
+                    {fieldErrors.minimum_hours_per_day && (
+                      <p className="text-sm text-red-500">{fieldErrors.minimum_hours_per_day}</p>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       In hours (e.g., 8 for 8 hours)
                     </p>
                   </div>
-
                   {/* Attendance Open Time */}
                   <div className="space-y-2">
                     <Label htmlFor="open_time">Attendance Open Time</Label>
@@ -344,8 +378,10 @@ const SettingsPage = () => {
                       value={attendanceOpenTime}
                       onChange={(e) => setAttendanceOpenTime(e.target.value)}
                     />
+                    {fieldErrors.attendance_open_time && (
+                      <p className="text-sm text-red-500">{fieldErrors.attendance_open_time}</p>
+                    )}
                   </div>
-
                   {/* Attendance Close Time */}
                   <div className="space-y-2">
                     <Label htmlFor="close_time">Attendance Close Time</Label>
@@ -355,6 +391,9 @@ const SettingsPage = () => {
                       value={attendanceCloseTime}
                       onChange={(e) => setAttendanceCloseTime(e.target.value)}
                     />
+                    {fieldErrors.attendance_close_time && (
+                      <p className="text-sm text-red-500">{fieldErrors.attendance_close_time}</p>
+                    )}
                   </div>
                   {/* Work Start Time */}
                   <div className="space-y-2">
@@ -365,6 +404,9 @@ const SettingsPage = () => {
                       value={workStartTime}
                       onChange={(e) => setWorkStartTime(e.target.value)}
                     />
+                    {fieldErrors.work_start_time && (
+                      <p className="text-sm text-red-500">{fieldErrors.work_start_time}</p>
+                    )}
                   </div>
                   {/* Tolerance Minutes */}
                   <div className="space-y-2">
@@ -378,6 +420,9 @@ const SettingsPage = () => {
                       onChange={(e) => setAttendanceToleranceMinutes(Math.max(0, Number(e.target.value)))}
                       required
                     />
+                    {fieldErrors.attendance_tolerance_minutes && (
+                      <p className="text-sm text-red-500">{fieldErrors.attendance_tolerance_minutes}</p>
+                    )}
                   </div>
                   {/* Payroll Day */}
                   <div className="space-y-2">
@@ -395,6 +440,9 @@ const SettingsPage = () => {
                       }}
                       required
                     />
+                    {fieldErrors.payroll_day_of_month && (
+                      <p className="text-sm text-red-500">{fieldErrors.payroll_day_of_month}</p>
+                    )}
                   </div>
                   {subscriptionLevel > 0 && (
                     <div className="flex items-center space-x-2">
@@ -454,6 +502,9 @@ const SettingsPage = () => {
                           onChange={(e) => setAttendanceRadiusMeters(Math.max(0, Number(e.target.value)))}
                           required
                         />
+                        {fieldErrors.attendance_radius_meters && (
+                          <p className="text-sm text-red-500">{fieldErrors.attendance_radius_meters}</p>
+                        )}
                       </div>
                       {/* Map Picker */}
                       <div className="space-y-2">
@@ -467,6 +518,11 @@ const SettingsPage = () => {
                             setLongitude(lng);
                           }}
                         />
+                        {(fieldErrors.latitude || fieldErrors.longitude) && (
+                          <p className="text-sm text-red-500">
+                            {fieldErrors.latitude || fieldErrors.longitude}
+                          </p>
+                        )}
                         <div className="grid grid-cols-2 gap-2 mt-2">
                           <div className="text-xs">
                             <span className="font-medium">Latitude:</span> {latitude.toFixed(7)}
@@ -622,6 +678,9 @@ const SettingsPage = () => {
                       </Label>
                     </div>
                   </div>
+                  <p className="text-xs text-muted-foreground mt-4">
+                    * Minimal harus ada 1 hari kerja yang dipilih
+                  </p>
                 </CardContent>
               </Card>
             </div>

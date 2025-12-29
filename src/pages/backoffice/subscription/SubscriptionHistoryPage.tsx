@@ -6,7 +6,7 @@ import { getErrorMessage, formatCurrency, formatDate } from '@/utils';
 import type { SubscriptionTransaction } from '@/types/subscription';
 import { PLAN_CONFIGS } from '@/types/subscription';
 import { AppSidebar } from '@/components/app-sidebar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -47,6 +47,7 @@ const SubscriptionHistoryPage = () => {
   const [filteredTransactions, setFilteredTransactions] = useState<SubscriptionTransaction[]>([]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [dateFilterError, setDateFilterError] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
 
   useEffect(() => {
@@ -60,19 +61,55 @@ const SubscriptionHistoryPage = () => {
   const loadHistory = async () => {
     try {
       setLoading(true);
+      setError('');
       const response = await subscriptionApi.getHistory();
       if (response.statusCode === 200) {
         setTransactions(response.data);
         setFilteredTransactions(response.data);
       }
-    } catch (err) {
-      setError(getErrorMessage(err, 'Gagal memuat riwayat subscription'));
+    } catch (err: any) {
+      console.error('Failed to load subscription history:', err);
+      
+      // Check if it's a validation error with detailed field errors
+      if (err.response?.data?.errors?.validationErrors) {
+        const validationErrors = err.response.data.errors.validationErrors;
+        const errorMessages = validationErrors
+          .map((error: { field: string; messages: string[] }) => 
+            `${error.field}: ${error.messages.join(', ')}`
+          )
+          .join('; ');
+        setError(`Validation error: ${errorMessages}`);
+      } 
+      // Check if it's a regular error with a message
+      else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } 
+      // Fallback to generic error
+      else {
+        setError(getErrorMessage(err, 'Gagal memuat riwayat subscription'));
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const filterTransactions = () => {
+    // Validate date filter
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      if (start > end) {
+        setDateFilterError('Start date must be less than or equal to end date');
+        setFilteredTransactions([]);
+        return;
+      } else {
+        setDateFilterError('');
+      }
+    } else {
+      setDateFilterError('');
+    }
+
     let filtered = [...transactions];
 
     // Filter by date range
@@ -217,36 +254,43 @@ const SubscriptionHistoryPage = () => {
               <Filter className="h-4 w-4 text-muted-foreground" />
             </div>
             
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-8 w-full sm:w-auto">
-              <div className="flex items-center gap-2">
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-[160px]"
-                  placeholder="Start date"
-                />
-                <span className="text-muted-foreground">to</span>
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-[160px]"
-                  placeholder="End date"
-                />
+            <div className="flex flex-col gap-1">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-8 w-full sm:w-auto">
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-[160px]"
+                      placeholder="Start date"
+                    />
+                    <span className="text-muted-foreground">to</span>
+                    <Input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="w-[160px]"
+                      placeholder="End date"
+                    />
+                  </div>
+                </div>
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All Types</SelectItem>
+                    <SelectItem value="NEW">New</SelectItem>
+                    <SelectItem value="UPGRADE">Upgrade</SelectItem>
+                    <SelectItem value="UPGRADE_RENEW">Upgrade Renew</SelectItem>
+                    <SelectItem value="DOWNGRADE">Downgrade</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All Types</SelectItem>
-                  <SelectItem value="NEW">New</SelectItem>
-                  <SelectItem value="UPGRADE">Upgrade</SelectItem>
-                  <SelectItem value="UPGRADE_RENEW">Upgrade Renew</SelectItem>
-                  <SelectItem value="DOWNGRADE">Downgrade</SelectItem>
-                </SelectContent>
-              </Select>
+              {dateFilterError && (
+                <p className="text-xs text-red-600">{dateFilterError}</p>
+              )}
             </div>
           </div>
           {/* Error Message */}
@@ -259,12 +303,6 @@ const SubscriptionHistoryPage = () => {
           )}
           {/* Transactions Table */}
           <Card className="!shadow-none">
-            <CardHeader>
-              <CardTitle>Transaction History</CardTitle>
-              <CardDescription>
-                All subscription transactions ever made
-              </CardDescription>
-            </CardHeader>
             <CardContent>
               {filteredTransactions.length === 0 ? (
                 <div className="text-center py-12">

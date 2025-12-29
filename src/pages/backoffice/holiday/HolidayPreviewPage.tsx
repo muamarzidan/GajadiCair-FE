@@ -147,7 +147,7 @@ const HolidayPreviewPage = () => {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Holiday Calendar</BreadcrumbPage>
+                  <BreadcrumbPage>Holiday Overview</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
@@ -157,7 +157,7 @@ const HolidayPreviewPage = () => {
         <div className="flex flex-1 flex-col gap-6 p-6">
           {/* Header */}
           <div className="flex flex-col gap-1">
-            <h1 className="text-3xl font-bold tracking-tight">Holiday Calendar</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Holiday Overview</h1>
             <p className="text-muted-foreground">
               View all company holidays in calendar format
             </p>

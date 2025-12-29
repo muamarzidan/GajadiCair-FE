@@ -171,8 +171,8 @@ function CompanyDashboardContent({ user }: { user: { name?: string } }) {
       <div className="flex flex-1 flex-col gap-6 p-6">
         {/* Welcome Section */}
         <div>
-          <h1 className="text-3xl font-bold">Selamat datang, {user?.name || 'Admin'}!</h1>
-          <p className="text-muted-foreground mt-1">Berikut adalah ringkasan aktivitas perusahaan hari ini</p>
+          <h1 className="text-3xl font-bold">Welcome, {user?.name || 'Admin'}!</h1>
+          <p className="text-muted-foreground mt-1">Here is a summary of today's company activities</p>
         </div>
         {/* Error Alert */}
         {error && (

@@ -83,6 +83,17 @@ export const HolidayFormDialog = ({
     if (!formData.end_date) {
       newErrors.end_date = 'End date is required';
     }
+    
+    // Validate that start_date <= end_date
+    if (formData.start_date && formData.end_date) {
+      const startDate = new Date(formData.start_date);
+      const endDate = new Date(formData.end_date);
+      
+      if (startDate > endDate) {
+        newErrors.end_date = 'End date must be greater than or equal to start date';
+      }
+    }
+    
     if (!formData.description) {
       newErrors.description = 'Description is required';
     }
@@ -129,8 +140,32 @@ export const HolidayFormDialog = ({
       }
     } catch (error: any) {
       console.error('Failed to save holiday:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to save holiday';
-      setErrors({ submit: errorMessage });
+      
+      const newErrors: Record<string, string> = {};
+      
+      // Check if it's a validation error with detailed field errors
+      if (error.response?.data?.errors?.validationErrors) {
+        const validationErrors = error.response.data.errors.validationErrors;
+        
+        validationErrors.forEach((err: { field: string; messages: string[] }) => {
+          newErrors[err.field] = err.messages.join(', ');
+        });
+        
+        setErrors(newErrors);
+        // Don't show submit error if we have field-specific errors
+        if (Object.keys(newErrors).length === 0) {
+          setErrors({ submit: 'Please fix the validation errors above' });
+        }
+      } 
+      // Check if it's a regular error with a message
+      else if (error.response?.data?.message) {
+        setErrors({ submit: error.response.data.message });
+      } 
+      // Fallback to generic error
+      else {
+        const errorMessage = error.message || 'Failed to save holiday';
+        setErrors({ submit: errorMessage });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -151,7 +186,9 @@ export const HolidayFormDialog = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Start Date & End Date Can be range or no */}
           <div>
-            <Label htmlFor="start_date">Start Date</Label>
+            <Label htmlFor="start_date">
+              Start Date <span className="text-red-500">*</span>
+            </Label>
             <Input 
               id="start_date"
               type="date"
@@ -165,7 +202,9 @@ export const HolidayFormDialog = ({
             )}
           </div>
           <div>
-            <Label htmlFor="end_date">End Date</Label>
+            <Label htmlFor="end_date">
+              End Date <span className="text-red-500">*</span>
+            </Label>
             <Input 
               id="end_date"
               type="date"
@@ -177,13 +216,19 @@ export const HolidayFormDialog = ({
             {errors.end_date && (
               <p className="mt-1 text-sm text-red-600">{errors.end_date}</p>
             )}
+            <p className="text-xs text-muted-foreground mt-1">
+              End date must be greater than or equal to start date
+            </p>
           </div>
           {/* Description */}
           <div>
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">
+              Description <span className="text-red-500">*</span>
+            </Label>
             <Input
               id="description"
               type="text"
+              placeholder="e.g., Christmas Day, Company Anniversary"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               disabled={isLoading}

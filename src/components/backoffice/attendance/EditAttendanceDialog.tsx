@@ -40,6 +40,7 @@ export function EditAttendanceDialog({
 }: EditAttendanceDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState<UpdateAttendanceRequest>({
     employee_attendance_id: '',
     status: 'PRESENT',
@@ -70,6 +71,7 @@ export function EditAttendanceDialog({
         late_minutes: attendance.late_minutes || 0,
       });
       setError('');
+      setFieldErrors({});
     }
   }, [attendance, open]);
 
@@ -108,15 +110,23 @@ export function EditAttendanceDialog({
         onOpenChange(false);
       }
     } catch (err: any) {
-      // Handle validation errors - backend returns array format
+      setFieldErrors({});
+      
+      // Handle validation errors with field-specific details (422)
       const validationErrorsArray = err.response?.data?.errors?.validationErrors;
       
       if (validationErrorsArray && Array.isArray(validationErrorsArray)) {
-        // Extract all error messages from array format
-        const errorMessages = validationErrorsArray
-          .flatMap((error: { field: string; messages: string[] }) => error.messages)
-          .join(', ');
-        setError(errorMessages);
+        // Map field-specific errors
+        const newFieldErrors: Record<string, string> = {};
+        validationErrorsArray.forEach((error: { field: string; messages: string[] }) => {
+          newFieldErrors[error.field] = error.messages.join(', ');
+        });
+        setFieldErrors(newFieldErrors);
+        setError('Please fix the validation errors in the form');
+      } else if (err.response?.status === 400) {
+        // Handle 400 bad request
+        const message = err.response?.data?.message || err.response?.data?.errors?.message || 'Bad request';
+        setError(message);
       } else {
         // Try standard validation error format
         const validationErrors = getValidationErrors(err);
@@ -157,7 +167,6 @@ export function EditAttendanceDialog({
               <span className="text-sm text-red-600 dark:text-red-400">{error}</span>
             </div>
           )}
-
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="status">
@@ -179,8 +188,10 @@ export function EditAttendanceDialog({
                   <SelectItem value="SICK">Sick (Sakit)</SelectItem>
                 </SelectContent>
               </Select>
+              {fieldErrors.status && (
+                <span className="text-sm text-red-600">{fieldErrors.status}</span>
+              )}
             </div>
-
             <div className="grid gap-2">
               <Label htmlFor="check_in_time">Check In Time</Label>
               <Input
@@ -189,8 +200,10 @@ export function EditAttendanceDialog({
                 value={formData.check_in_time}
                 onChange={(e) => setFormData({ ...formData, check_in_time: e.target.value })}
               />
+              {fieldErrors.check_in_time && (
+                <span className="text-sm text-red-600">{fieldErrors.check_in_time}</span>
+              )}
             </div>
-
             <div className="grid gap-2">
               <Label htmlFor="check_out_time">Check Out Time</Label>
               <Input
@@ -199,19 +212,33 @@ export function EditAttendanceDialog({
                 value={formData.check_out_time}
                 onChange={(e) => setFormData({ ...formData, check_out_time: e.target.value })}
               />
+              {fieldErrors.check_out_time && (
+                <span className="text-sm text-red-600">{fieldErrors.check_out_time}</span>
+              )}
             </div>
-
             <div className="grid gap-2">
               <Label htmlFor="late_minutes">Late Minutes</Label>
               <Input
                 id="late_minutes"
                 type="number"
                 min="0"
+                step="1"
                 value={formData.late_minutes}
-                onChange={(e) =>
-                  setFormData({ ...formData, late_minutes: parseInt(e.target.value) || 0 })
-                }
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '' || /^\d+$/.test(value)) {
+                    setFormData({ ...formData, late_minutes: parseInt(value) || 0 });
+                  }
+                }}
+                onKeyPress={(e) => {
+                  if (!/[0-9]/.test(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
               />
+              {fieldErrors.late_minutes && (
+                <span className="text-sm text-red-600">{fieldErrors.late_minutes}</span>
+              )}
             </div>
           </div>
 

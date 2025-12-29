@@ -35,13 +35,10 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  
-  // Profile form state
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [name, setName] = useState(user?.name || '');
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [profilePreview, setProfilePreview] = useState<string | null>(null);
-  
-  // Password form state
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -49,7 +46,6 @@ const ProfilePage = () => {
   const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
       if (!allowedTypes.includes(file.type)) {
         setError('Format file tidak valid. Hanya JPG dan PNG yang diperbolehkan.');
@@ -57,8 +53,7 @@ const ProfilePage = () => {
         return;
       }
 
-      // Validate file size (max 5MB)
-      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      const maxSize = 5 * 1024 * 1024;
       if (file.size > maxSize) {
         setError('Ukuran file terlalu besar. Maksimal 5MB.');
         e.target.value = '';
@@ -80,6 +75,7 @@ const ProfilePage = () => {
     setLoading(true);
     setError('');
     setSuccess('');
+    setFieldErrors({});
 
     try {
       const data = {
@@ -111,8 +107,30 @@ const ProfilePage = () => {
         }
       }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Terjadi kesalahan saat update profile';
-      setError(errorMessage);
+      console.error('Failed to update profile:', err);
+      
+      const newFieldErrors: Record<string, string> = {};
+      
+      // Check if it's a validation error with detailed field errors
+      if (err.response?.data?.errors?.validationErrors) {
+        const validationErrors = err.response.data.errors.validationErrors;
+        
+        validationErrors.forEach((error: { field: string; messages: string[] }) => {
+          newFieldErrors[error.field] = error.messages.join(', ');
+        });
+        
+        setFieldErrors(newFieldErrors);
+        setError('Please fix the validation errors in the form');
+      } 
+      // Check if it's a regular error with a message
+      else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } 
+      // Fallback to generic error
+      else {
+        const errorMessage = err.message || 'Terjadi kesalahan saat update profile';
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -123,6 +141,7 @@ const ProfilePage = () => {
     setLoading(true);
     setError('');
     setSuccess('');
+    setFieldErrors({});
 
     if (newPassword !== confirmPassword) {
       setError('New password and confirmation do not match');
@@ -164,8 +183,30 @@ const ProfilePage = () => {
         }
       }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'An error occurred while changing the password';
-      setError(errorMessage);
+      console.error('Failed to change password:', err);
+      
+      const newFieldErrors: Record<string, string> = {};
+      
+      // Check if it's a validation error with detailed field errors
+      if (err.response?.data?.errors?.validationErrors) {
+        const validationErrors = err.response.data.errors.validationErrors;
+        
+        validationErrors.forEach((error: { field: string; messages: string[] }) => {
+          newFieldErrors[error.field] = error.messages.join(', ');
+        });
+        
+        setFieldErrors(newFieldErrors);
+        setError('Please fix the validation errors in the form');
+      } 
+      // Check if it's a regular error with a message
+      else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } 
+      // Fallback to generic error
+      else {
+        const errorMessage = err.message || 'An error occurred while changing the password';
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -253,6 +294,9 @@ const ProfilePage = () => {
                           onChange={(e) => setName(e.target.value)}
                           required
                         />
+                        {fieldErrors.name && (
+                          <p className="text-sm text-red-500">{fieldErrors.name}</p>
+                        )}
                       </div>
                     )
                   }
@@ -269,6 +313,9 @@ const ProfilePage = () => {
                       />
                       <Camera className="h-5 w-5 text-muted-foreground" />
                     </div>
+                    {fieldErrors.profile_picture && (
+                      <p className="text-sm text-red-500">{fieldErrors.profile_picture}</p>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       Format: JPG, PNG. Max 5MB
                     </p>
@@ -303,6 +350,9 @@ const ProfilePage = () => {
                       onChange={(e) => setOldPassword(e.target.value)}
                       required
                     />
+                    {fieldErrors.old_password && (
+                      <p className="text-sm text-red-500">{fieldErrors.old_password}</p>
+                    )}
                   </div>
                   {/* New Password */}
                   <div className="space-y-2">
@@ -316,6 +366,9 @@ const ProfilePage = () => {
                       required
                       minLength={6}
                     />
+                    {fieldErrors.new_password && (
+                      <p className="text-sm text-red-500">{fieldErrors.new_password}</p>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       Minimal 6 karakter
                     </p>
@@ -332,6 +385,9 @@ const ProfilePage = () => {
                       required
                       minLength={6}
                     />
+                    {fieldErrors.confirm_password && (
+                      <p className="text-sm text-red-500">{fieldErrors.confirm_password}</p>
+                    )}
                   </div>
                   {/* Submit Button */}
                   <Button type="submit" className="w-full" disabled={loading} variant="outline">
