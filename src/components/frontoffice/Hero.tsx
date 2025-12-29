@@ -1,10 +1,10 @@
 export default function HeroSection() {
   return (
-    <section id="hero-section">
+    <section id="herooo">
       <div id='stars'></div>
       <div id='stars2'></div>
       <div id='stars3'></div>
-      <div id='title'>
+      <div id='title' className="container mx-auto px-4">
         <span id="main-title">
           GajadiCair
         </span>

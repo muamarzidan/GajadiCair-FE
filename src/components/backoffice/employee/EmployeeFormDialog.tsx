@@ -177,7 +177,7 @@ export const EmployeeFormDialog = ({
           email: formData.email,
           password: formData.password,
           base_salary: Number(formData.base_salary),
-          bank_id: formData.bank_id,
+          bank_id: String(formData.bank_id),
           bank_account_number: formData.bank_account_number,
           tax_identification_number: formData.tax_identification_number || undefined,
           send_to_email: !formData.dont_send_email, // Invert checkbox value
@@ -192,8 +192,30 @@ export const EmployeeFormDialog = ({
       }
     } catch (error: any) {
       console.error('Failed to save employee:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to save employee';
-      setErrors({ submit: errorMessage });
+      
+      const newErrors: Record<string, string> = {};
+      
+      // Check if it's a validation error with detailed field errors
+      if (error.response?.data?.errors?.validationErrors) {
+        const validationErrors = error.response.data.errors.validationErrors;
+        
+        validationErrors.forEach((err: { field: string; messages: string[] }) => {
+          newErrors[err.field] = err.messages.join(', ');
+        });
+        
+        // Also set a general submit error
+        newErrors.submit = 'Please fix the validation errors above';
+      } 
+      // Check if it's a regular error with a message
+      else if (error.response?.data?.message) {
+        newErrors.submit = error.response.data.message;
+      } 
+      // Fallback to generic error
+      else {
+        newErrors.submit = 'Failed to save employee. Please try again.';
+      }
+      
+      setErrors(newErrors);
     } finally {
       setIsLoading(false);
     }
