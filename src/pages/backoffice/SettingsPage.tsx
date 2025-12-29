@@ -4,6 +4,7 @@ import { Settings as Check, X, MapPin, Clock, Calendar, Navigation } from 'lucid
 import { useIsMobile } from '@/hooks/use-mobile';
 import { attendanceSettingsApi } from '@/services/settings';
 import { workingDayApi } from '@/services/workingDay';
+import { subscriptionApi } from '@/services/subscription';
 import { getErrorMessage } from '@/utils';
 import type { WorkingDay } from '@/types/workingDay';
 import { MapPicker } from '@/components/shared/MapPicker';
@@ -48,6 +49,7 @@ const SettingsPage = () => {
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [subscriptionLevel, setSubscriptionLevel] = useState<number>(0);
   // Form state
   const [minimumHoursPerDay, setMinimumHoursPerDay] = useState<number>(0);
   const [attendanceOpenTime, setAttendanceOpenTime] = useState('');
@@ -107,6 +109,12 @@ const SettingsPage = () => {
       const workingDayResponse = await workingDayApi.getWorkingDay();
       if (workingDayResponse.statusCode === 200) {
         setWorkingDay(workingDayResponse.data);
+      }
+
+      // Load subscription status
+      const subscriptionResponse = await subscriptionApi.getStatus();
+      if (subscriptionResponse.statusCode === 200) {
+        setSubscriptionLevel(subscriptionResponse.data.level_plan);
       }
     } catch (err) {
       setError(getErrorMessage(err, 'Gagal memuat settings'));
@@ -348,7 +356,6 @@ const SettingsPage = () => {
                       onChange={(e) => setAttendanceCloseTime(e.target.value)}
                     />
                   </div>
-
                   {/* Work Start Time */}
                   <div className="space-y-2">
                     <Label htmlFor="work_start">Work Start Time</Label>
@@ -359,7 +366,6 @@ const SettingsPage = () => {
                       onChange={(e) => setWorkStartTime(e.target.value)}
                     />
                   </div>
-
                   {/* Tolerance Minutes */}
                   <div className="space-y-2">
                     <Label htmlFor="tolerance">Attendance Tolerance (Minutes)</Label>
@@ -372,14 +378,10 @@ const SettingsPage = () => {
                       onChange={(e) => setAttendanceToleranceMinutes(Math.max(0, Number(e.target.value)))}
                       required
                     />
-                    {/* <p className="text-xs text-muted-foreground">
-                      In minutes (e.g., 15 for 15 minutes)
-                    </p> */}
                   </div>
-
                   {/* Payroll Day */}
                   <div className="space-y-2">
-                    <Label htmlFor="payroll_day">Payroll Day (1-27)</Label>
+                    <Label htmlFor="payroll_day">Payroll Date (1-27)</Label>
                     <Input
                       id="payroll_day"
                       type="number"
@@ -393,25 +395,22 @@ const SettingsPage = () => {
                       }}
                       required
                     />
-                    {/* <p className="text-xs text-muted-foreground">
-                      Tanggal penggajian setiap bulan
-                    </p> */}
                   </div>
-
-                  {/* Recognize with Gesture */}
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="recognize_gesture"
-                      checked={recognizeWithGesture}
-                      onCheckedChange={(checked) => setRecognizeWithGesture(checked as boolean)}
-                    />
-                    <Label
-                      htmlFor="recognize_gesture"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      Enable Gesture Recognition for Attendance
-                    </Label>
-                  </div>
+                  {subscriptionLevel > 0 && (
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="recognize_gesture"
+                        checked={recognizeWithGesture}
+                        onCheckedChange={(checked) => setRecognizeWithGesture(checked as boolean)}
+                      />
+                      <Label
+                        htmlFor="recognize_gesture"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        Enable Gesture Recognition for Attendance
+                      </Label>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
               {/* Location Settings */}

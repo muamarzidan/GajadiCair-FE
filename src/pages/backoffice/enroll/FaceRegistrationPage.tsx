@@ -6,7 +6,7 @@ import { Camera, RefreshCw, Check, AlertCircle, X, Home } from 'lucide-react';
 import { faceRecognitionApi } from '@/services/faceRecognition';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import face from "@/assets/images/face-recog-thumbnail.jpeg";
+import face from "@/assets/images/face-recog-thumbnail.png";
 
 
 const MAX_ATTEMPTS = 3;

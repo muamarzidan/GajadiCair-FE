@@ -1,6 +1,6 @@
 import apiClient from '@/lib/apiClient';
 import type { ApiResponse } from '@/types/api';
-import type { ICheckFaceResponse } from '@/types/faceRecognition';
+import type { ICheckFaceResponse, GestureListResponse } from '@/types/faceRecognition';
 
 export const faceRecognitionApi = {
   checkFace: async (imageFile: File): Promise<ApiResponse<ICheckFaceResponse>> => {
@@ -19,7 +19,6 @@ export const faceRecognitionApi = {
     
     return response.data;
   },
-
   enrollFace: async (imageFiles: File[]): Promise<ApiResponse<any>> => {
     const formData = new FormData();
     imageFiles.forEach((file) => {
@@ -34,6 +33,13 @@ export const faceRecognitionApi = {
           'Content-Type': 'multipart/form-data',
         },
       }
+    );
+    
+    return response.data;
+  },
+  getGestureList: async (): Promise<ApiResponse<GestureListResponse>> => {
+    const response = await apiClient.get<ApiResponse<GestureListResponse>>(
+      '/api/v1/employee/face-recognition/gesture-list'
     );
     
     return response.data;

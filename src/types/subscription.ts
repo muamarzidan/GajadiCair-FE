@@ -58,7 +58,7 @@ export const PLAN_CONFIGS: Record<number, PlanInfo> = {
       'Maksimal 5 Karyawan',
       'Manajemen Karyawan Dasar',
       'Login Karyawan (ESS)',
-      'Absensi Validasi Standar',
+      'Absensi Validasi Standar (Muka)',
     ],
   },
   1: {
@@ -68,8 +68,8 @@ export const PLAN_CONFIGS: Record<number, PlanInfo> = {
     priceLabel: 'Rp 299.000',
     features: [
       'Semua fitur FREE',
-      'Maksimal 10 Karyawan',
-      'Absensi Validasi Menengah',
+      'Maksimal 20 Karyawan',
+      'Absensi Validasi Menengah (Gesture)',
       'Cronjob Gaji Otomatis',
     ],
   },
