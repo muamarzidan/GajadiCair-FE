@@ -1,6 +1,4 @@
-Ttmbaain iterasi 0-50
-
-
+exaple domaion ketika abis updgrad plan
 
 
 pastikan error response benar semua ambil dari message backend (AUTH DONE, KARYAWAN, CUTI, SETTINGS, ACCOUNT)

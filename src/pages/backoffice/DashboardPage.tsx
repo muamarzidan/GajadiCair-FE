@@ -53,7 +53,6 @@ export default function DashboardPage() {
       </SidebarProvider>
     );
   }
-  
   // Show employee dashboard if user is employee role
   if (user?.role === 'employee') {
     return (

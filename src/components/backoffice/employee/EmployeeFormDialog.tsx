@@ -125,6 +125,12 @@ export const EmployeeFormDialog = ({
 
     if (!formData.bank_account_number.trim()) {
       newErrors.bank_account_number = 'Bank account number is required';
+    } else if (!/^\d+$/.test(formData.bank_account_number)) {
+      newErrors.bank_account_number = 'Bank account number must contain only numbers';
+    }
+
+    if (formData.tax_identification_number.trim() && !/^\d+$/.test(formData.tax_identification_number)) {
+      newErrors.tax_identification_number = 'Tax identification number must contain only numbers';
     }
 
     setErrors(newErrors);
@@ -318,14 +324,16 @@ export const EmployeeFormDialog = ({
               id="bank_account_number"
               placeholder="1234567890"
               value={formData.bank_account_number}
-              onChange={(e) => setFormData({ ...formData, bank_account_number: e.target.value })}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '');
+                setFormData({ ...formData, bank_account_number: value });
+              }}
               disabled={isLoading}
             />
             {errors.bank_account_number && (
               <p className="text-sm text-red-500">{errors.bank_account_number}</p>
             )}
           </div>
-
           {/* Tax ID (NPWP) - Optional */}
           <div className="space-y-2">
             <Label htmlFor="tax_id">
@@ -335,13 +343,16 @@ export const EmployeeFormDialog = ({
               id="tax_id"
               placeholder="123456789012345"
               value={formData.tax_identification_number}
-              onChange={(e) =>
-                setFormData({ ...formData, tax_identification_number: e.target.value })
-              }
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '');
+                setFormData({ ...formData, tax_identification_number: value });
+              }}
               disabled={isLoading}
             />
+            {errors.tax_identification_number && (
+              <p className="text-sm text-red-500">{errors.tax_identification_number}</p>
+            )}
           </div>
-
           {/* Is Active - Only for Edit */}
           {isEdit && (
             <div className="flex items-center space-x-2">
@@ -358,7 +369,6 @@ export const EmployeeFormDialog = ({
               </Label>
             </div>
           )}
-
           {/* Don't Send Email - Only for Create */}
           {!isEdit && (
             <div className="flex items-center space-x-2">

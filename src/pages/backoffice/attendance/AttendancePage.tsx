@@ -10,6 +10,7 @@ import {
   type CheckOutEligibility
 } from '@/services/attendance';
 import { faceRecognitionApi } from '@/services/faceRecognition';
+import { profileApi } from '@/services/profile';
 import type { GestureSelection, HandType } from '@/types/faceRecognition';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Button } from '@/components/ui/button';
@@ -57,18 +58,23 @@ const AttendancePage = () => {
   const [checkInEligibility, setCheckInEligibility] = useState<CheckInEligibility | null>(null);
   const [checkOutEligibility, setCheckOutEligibility] = useState<CheckOutEligibility | null>(null);
   
+  // Profile & Company settings
+  const [locationEnabled, setLocationEnabled] = useState(true);
+  const [gestureEnabled, setGestureEnabled] = useState(false);
+  const [levelPlan, setLevelPlan] = useState(0);
+  
   // Gesture states
   const [allowedGestures, setAllowedGestures] = useState<string[]>([]);
-  const [gestureRequired, setGestureRequired] = useState(false);
+  const [randomGesture, setRandomGesture] = useState<{ gesture: string; hand: HandType } | null>(null);
   const [gestureSelections, setGestureSelections] = useState<GestureSelection[]>([
     { gesture: '', hand: 'Left' },
   ]);
 
   useEffect(() => {
+    loadEmployeeProfile();
     loadTodayStatus();
     loadAttendanceHistory();
     loadEligibility();
-    loadGestureList();
   }, []);
   // Cleanup camera on unmount
   useEffect(() => {
@@ -78,6 +84,24 @@ const AttendancePage = () => {
       };
     };
   }, [stream]);
+
+  const loadEmployeeProfile = async () => {
+    try {
+      const response = await profileApi.getProfile();
+      if (response.statusCode === 200) {
+        setLocationEnabled(response.data.company.attendance_location_enabled);
+        setGestureEnabled(response.data.company.recognize_with_gesture);
+        setLevelPlan(response.data.company.level_plan);
+        
+        // Load gesture list only if gesture is enabled and level plan > 0
+        if (response.data.company.recognize_with_gesture && response.data.company.level_plan > 0) {
+          await loadGestureList(response.data.company.level_plan);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load employee profile:', err);
+    }
+  };
 
   const loadTodayStatus = async () => {
     try {
@@ -117,13 +141,20 @@ const AttendancePage = () => {
     }
   };
 
-  const loadGestureList = async () => {
+  const loadGestureList = async (level: number) => {
     try {
       const response = await faceRecognitionApi.getGestureList();
       if (response.statusCode === 200) {
         setAllowedGestures(response.data.allowed_gestures);
-        // If there are gestures, it means gesture is required
-        setGestureRequired(response.data.total > 0);
+        
+        // Level 1: Random pick 1 gesture + 1 hand from FE
+        if (level === 1 && response.data.allowed_gestures.length > 0) {
+          const randomGestureValue = response.data.allowed_gestures[
+            Math.floor(Math.random() * response.data.allowed_gestures.length)
+          ];
+          const randomHand: HandType = Math.random() > 0.5 ? 'Left' : 'Right';
+          setRandomGesture({ gesture: randomGestureValue, hand: randomHand });
+        }
       }
     } catch (err) {
       console.error('Failed to load gesture list:', err);
@@ -136,23 +167,52 @@ const AttendancePage = () => {
       setSuccess('');
       setGeoError('');
 
-      if (!navigator.geolocation) {
-        throw new Error('Geolocation tidak didukung oleh browser Anda');
+      // Check location permission only if location is enabled
+      if (locationEnabled) {
+        if (!navigator.geolocation) {
+          throw new Error('Geolocation tidak didukung oleh browser Anda');
+        }
+
+        let locationPermission = 'unknown';
+        try {
+          const locPerm = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
+          locationPermission = locPerm.state;
+        } catch (e) {
+          console.error('Cannot check location permission:', e);
+        }
+
+        if (locationPermission === 'denied') {
+          throw new Error(
+            'Izin Lokasi ditolak. Mohon aktifkan di pengaturan browser:\n\n' +
+            '1. Klik ikon gembok di sebelah kiri address bar browser anda\n' +
+            '2. Pilih "Site settings" atau "Pengaturan situs"\n' +
+            '3. Ubah izin "Location" menjadi "Allow"\n' +
+            '4. Reload halaman dan coba lagi'
+          );
+        }
+
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: false,
+            timeout: 30000,
+            maximumAge: 60000,
+          });
+        });
+
+        setCoords({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+      } else {
+        // Location not required, set dummy coords or null handling
+        setCoords({ latitude: 0, longitude: 0 });
       }
+
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('Media Devices API tidak didukung oleh browser Anda');
       }
 
-      let locationPermission = 'unknown';
       let cameraPermission = 'unknown';
-
-      try {
-        const locPerm = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
-        locationPermission = locPerm.state;
-      } catch (e) {
-        console.error('Cannot check location permission:', e);
-      }
-
       try {
         const camPerm = await navigator.permissions.query({ name: 'camera' as PermissionName });
         cameraPermission = camPerm.state;
@@ -160,36 +220,15 @@ const AttendancePage = () => {
         console.error('Cannot check camera permission:', e);
       }
 
-      const deniedPermissions = [];
-      if (locationPermission === 'denied') {
-        deniedPermissions.push('Lokasi');
-      }
       if (cameraPermission === 'denied') {
-        deniedPermissions.push('Kamera');
-      }
-
-      if (deniedPermissions.length > 0) {
         throw new Error(
-          `Izin ${deniedPermissions.join(' dan ')} ditolak. Mohon aktifkan di pengaturan browser:\n\n` +
-          `1. Klik ikon gembok di sebelah kiri address bar browser anda\n` +
-          `2. Pilih "Site settings" atau "Pengaturan situs"\n` +
-          `3. Ubah izin "Location" dan "Camera" menjadi "Allow"\n` +
-          `4. Reload halaman dan coba lagi`
+          'Izin Kamera ditolak. Mohon aktifkan di pengaturan browser:\n\n' +
+          '1. Klik ikon gembok di sebelah kiri address bar browser anda\n' +
+          '2. Pilih "Site settings" atau "Pengaturan situs"\n' +
+          '3. Ubah izin "Camera" menjadi "Allow"\n' +
+          '4. Reload halaman dan coba lagi'
         );
       }
-
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: false, // Set false untuk lebih cepat
-          timeout: 30000, // 30 detik timeout
-          maximumAge: 60000, // Cache 1 menit OK
-        });
-      });
-
-      setCoords({
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-      });
 
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -207,8 +246,6 @@ const AttendancePage = () => {
 
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
-        // Let the video play automatically without calling play()
-        // to avoid "interrupted by new load request" error
       }
     } catch (err: any) {
       if (err.code === 1 || err.message?.includes('ditolak')) {
@@ -276,28 +313,35 @@ const AttendancePage = () => {
         type: 'image/jpeg',
       });
 
-      // Prepare gesture data if required
+      // Prepare gesture data based on level plan and gesture enabled setting
       let gestures: string[] | undefined;
       let hands: string[] | undefined;
 
-      if (gestureRequired && gestureSelections.length > 0) {
-        // Filter out empty selections
-        const validSelections = gestureSelections.filter(s => s.gesture && s.hand);
-        
-        if (validSelections.length === 0) {
-          throw new Error('Silakan pilih gesture dan hand yang diperlukan');
-        }
-
-        // Check for duplicate hands
-        if (validSelections.length === 2) {
-          if (validSelections[0].hand === validSelections[1].hand) {
-            throw new Error('Tidak boleh memilih hand yang sama untuk kedua gesture');
+      if (gestureEnabled) {
+        if (levelPlan === 1 && randomGesture) {
+          // Level 1: Use random gesture picked by FE
+          gestures = [randomGesture.gesture];
+          hands = [randomGesture.hand];
+        } else if (levelPlan === 2 && gestureSelections.length > 0) {
+          // Level 2: User picks gestures
+          const validSelections = gestureSelections.filter(s => s.gesture && s.hand);
+          
+          if (validSelections.length === 0) {
+            throw new Error('Silakan pilih gesture dan hand yang diperlukan');
           }
-        }
 
-        gestures = validSelections.map(s => s.gesture);
-        hands = validSelections.map(s => s.hand);
+          // Check for duplicate hands
+          if (validSelections.length === 2) {
+            if (validSelections[0].hand === validSelections[1].hand) {
+              throw new Error('Tidak boleh memilih hand yang sama untuk kedua gesture');
+            }
+          }
+
+          gestures = validSelections.map(s => s.gesture);
+          hands = validSelections.map(s => s.hand);
+        }
       }
+      // If gestureEnabled is false or level 0: No gestures, remain undefined
 
       if (checkType === 'in') {
         const response = await attendanceApi.checkInFace(
@@ -568,11 +612,30 @@ const AttendancePage = () => {
                   </div>
                 )}
 
-                {/* Gesture Selection - Only show if required */}
-                {gestureRequired && allowedGestures.length > 0 && (
+                {/* Gesture Section - Based on Level Plan and Gesture Enabled */}
+                {gestureEnabled && levelPlan === 1 && randomGesture && (
+                  <div className="space-y-2 p-4 border rounded-lg bg-blue-50">
+                    <Label className="text-sm font-semibold">Gesture Recognition (Auto)</Label>
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Gesture:</span>
+                        <span className="font-semibold">{randomGesture.gesture}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Hand:</span>
+                        <span className="font-semibold">{randomGesture.hand}</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Pastikan Anda melakukan gesture ini saat mengambil foto
+                    </p>
+                  </div>
+                )}
+
+                {gestureEnabled && levelPlan === 2 && allowedGestures.length > 0 && (
                   <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                     <div className="flex items-center justify-between">
-                      <Label className="text-sm font-semibold">Gesture Recognition</Label>
+                      <Label className="text-sm font-semibold">Gesture Recognition (Manual)</Label>
                       {gestureSelections.length < 2 && (
                         <Button 
                           type="button" 
