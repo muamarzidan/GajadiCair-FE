@@ -1,6 +1,6 @@
 import apiClient from '@/lib/apiClient';
 import type { ApiResponse } from '@/types/api';
-import type { UpdateProfileRequest, ChangePasswordRequest, UpdateProfileResponse } from '@/types/profile';
+import type { EmployeeProfileResponse, UpdateProfileRequest, ChangePasswordRequest, UpdateProfileResponse } from '@/types/profile';
 
 export const companyProfileApi = {
   updateProfile: async (data: UpdateProfileRequest): Promise<ApiResponse<UpdateProfileResponse>> => {
@@ -34,6 +34,14 @@ export const companyProfileApi = {
 };
 
 export const employeeProfileApi = {
+  getProfile: async (): Promise<ApiResponse<EmployeeProfileResponse>> => {
+    const response = await apiClient.get<ApiResponse<EmployeeProfileResponse>>(
+      '/api/v1/employee/profile'
+    );
+
+    return response.data;
+  },
+
   updateProfile: async (data: UpdateProfileRequest): Promise<ApiResponse<UpdateProfileResponse>> => {
     const formData = new FormData();
     formData.append('name', data.name);
@@ -63,3 +71,9 @@ export const employeeProfileApi = {
     return response.data;
   },
 };
+
+export const profileApi = {
+  getProfile: employeeProfileApi.getProfile,
+};
+
+export * from '@/types/profile';

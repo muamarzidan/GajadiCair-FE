@@ -11,7 +11,7 @@ import face from "@/assets/images/face-recog-thumbnail.png";
 
 const MAX_ATTEMPTS = 3;
 const CAPTURE_COUNT = 50;
-const CAPTURE_DURATION = 50000;
+const CAPTURE_DURATION = 30000;
 
 const FaceRegistrationPage = () => {
   const navigate = useNavigate();
@@ -20,6 +20,8 @@ const FaceRegistrationPage = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [cameraStarted, setCameraStarted] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [faceVerified, setFaceVerified] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [countdown, setCountdown] = useState(3);
   const [capturedImages, setCapturedImages] = useState<File[]>([]);
@@ -99,8 +101,6 @@ const FaceRegistrationPage = () => {
       // Additional small delay for stability
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      startAutoCapture();
-      
     } catch (err: any) {
       setError(err.message || 'Tidak dapat mengakses kamera. Pastikan izin kamera sudah diberikan.');
       setCameraStarted(false);
@@ -110,6 +110,53 @@ const FaceRegistrationPage = () => {
       }
     }
   };
+
+  const verifyFace = async () => {
+    if (!videoRef.current || !canvasRef.current) {
+      setError('Kamera belum siap');
+      return;
+    }
+
+    setIsVerifying(true);
+    setError('');
+
+    try {
+      // Capture 1 photo for verification
+      const file = await captureFrame(0);
+      
+      if (!file) {
+        setError('Gagal mengambil foto. Silakan coba lagi.');
+        setIsVerifying(false);
+        return;
+      }
+
+      // Call checkFace API
+      const checkResponse = await faceRecognitionApi.checkFace(file);
+
+      if (checkResponse.statusCode === 200 && checkResponse.data.has_face === true && checkResponse.data.count === 1) {
+        // Face verified, proceed to capture 50 photos
+        setFaceVerified(true);
+        setIsVerifying(false);
+        
+        // Small delay before starting auto capture
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        startAutoCapture();
+      } else if (checkResponse.data.count === 0) {
+        setError('Wajah tidak terdeteksi. Pastikan wajah Anda terlihat jelas.');
+        setIsVerifying(false);
+      } else if (checkResponse.data.count > 1) {
+        setError('Terdeteksi lebih dari 1 wajah. Pastikan hanya wajah Anda yang terlihat.');
+        setIsVerifying(false);
+      } else {
+        setError('Gagal mendeteksi wajah. Silakan coba lagi.');
+        setIsVerifying(false);
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Terjadi kesalahan. Silakan coba lagi.');
+      setIsVerifying(false);
+    }
+  };
+
   const startAutoCapture = async () => {
     setIsCapturing(true);
     setError('');
@@ -126,21 +173,53 @@ const FaceRegistrationPage = () => {
       const file = await captureFrame(i);
       if (file) {
         capturedFiles.push(file);
+        // Update state immediately for real-time progress
+        setCapturedImages([...capturedFiles]);
       } else {
         console.warn(`Failed to capture frame ${i}`);
       }
       await new Promise(resolve => setTimeout(resolve, intervalMs));
     }
-
-    setCapturedImages(capturedFiles);
     setIsCapturing(false);
 
     if (capturedFiles.length >= 50) {
-      await processCaptures(capturedFiles);
+      await enrollFaceImages(capturedFiles);
     } else {
       handleFailedAttempt(`Hanya berhasil mengambil ${capturedFiles.length} foto. Minimal 50 foto diperlukan.`);
     }
   };
+
+  const enrollFaceImages = async (files: File[]) => {
+    if (files.length === 0) {
+      handleFailedAttempt('Gagal mengambil foto. Silakan coba lagi.');
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      const enrollResponse = await faceRecognitionApi.enrollFace(files);
+
+      if (enrollResponse.statusCode === 200 || enrollResponse.statusCode === 201) {
+        setSuccess(true);
+        
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+        }
+
+        setTimeout(() => {
+          navigate('/dashboard', { replace: true });
+        }, 2000);
+      } else {
+        handleFailedAttempt('Gagal menyimpan data wajah. Silakan coba lagi.');
+      }
+    } catch (err: any) {
+      handleFailedAttempt(err.response?.data?.message || 'Terjadi kesalahan. Silakan coba lagi.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const captureFrame = async (index: number): Promise<File | null> => {
     if (!videoRef.current || !canvasRef.current) {
       console.error('Video or canvas ref not available');
@@ -172,53 +251,14 @@ const FaceRegistrationPage = () => {
 
     return new File([blob], `face_${index}.jpg`, { type: 'image/jpeg' });
   };
-  const processCaptures = async (files: File[]) => {
-    if (files.length === 0) {
-      handleFailedAttempt('Gagal mengambil foto. Silakan coba lagi.');
-      return;
-    }
 
-    setIsProcessing(true);
-
-    try {
-      const lastPhoto = files[files.length - 1];
-      const checkResponse = await faceRecognitionApi.checkFace(lastPhoto);
-
-      if (checkResponse.statusCode === 200 && checkResponse.data.has_face === true && checkResponse.data.count === 1) {
-        const enrollResponse = await faceRecognitionApi.enrollFace(files);
-
-        if (enrollResponse.statusCode === 200 || enrollResponse.statusCode === 201) {
-          setSuccess(true);
-          
-          if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-          }
-
-          setTimeout(() => {
-            navigate('/dashboard', { replace: true });
-          }, 2000);
-        } else {
-          handleFailedAttempt('Gagal menyimpan data wajah. Silakan coba lagi.');
-        }
-      } else if (checkResponse.data.count === 0) {
-        handleFailedAttempt('Wajah tidak terdeteksi. Pastikan wajah Anda terlihat jelas.');
-      } else if (checkResponse.data.count > 1) {
-        handleFailedAttempt('Terdeteksi lebih dari 1 wajah. Pastikan hanya wajah Anda yang terlihat.');
-      } else {
-        handleFailedAttempt('Gagal mendeteksi wajah. Silakan coba lagi.');
-      }
-    } catch (err: any) {
-      handleFailedAttempt(err.response?.data?.message || 'Terjadi kesalahan. Silakan coba lagi.');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
   const handleFailedAttempt = (message: string) => {
     const newAttempts = attempts + 1;
     setAttempts(newAttempts);
     setError(message);
     setCapturedImages([]);
     setCameraStarted(false);
+    setFaceVerified(false);
     setCountdown(3);
 
     if (stream) {
@@ -291,7 +331,7 @@ const FaceRegistrationPage = () => {
                   <li>Hindari backlight (cahaya dari belakang)</li>
                   <li>Hanya 1 wajah yang terlihat di kamera</li>
                 </ul>
-                <p className="text-sm font-medium text-black mt-3">Sistem akan mengambil 50 foto secara otomatis dalam 50 detik.</p>
+                <p className="text-sm font-medium text-black mt-3">Sistem akan mengambil 50 foto secara otomatis dalam 30 detik.</p>
                 <p className="text-sm font-medium text-black">Jika sudah siap, tekan tombol "Buka Kamera" untuk memulai.</p>
               </div>
               {/* Action Button */}
@@ -327,6 +367,15 @@ const FaceRegistrationPage = () => {
                     className="w-full h-full object-cover opacity-80"
                   />
                 </div>
+                
+                {/* Verification Success Badge */}
+                {faceVerified && !isCapturing && (
+                  <div className="absolute top-4 left-4 bg-green-500 text-white px-4 py-2 rounded-full flex items-center gap-2">
+                    <Check className="w-4 h-4" />
+                    <span className="text-sm font-medium">Wajah Terverifikasi</span>
+                  </div>
+                )}
+                
                 {/* Countdown Overlay */}
                 {countdown > 0 && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/10">
@@ -339,7 +388,16 @@ const FaceRegistrationPage = () => {
                 {isCapturing && countdown === 0 && (
                   <div className="absolute top-4 left-4 bg-red-500 text-white px-4 py-2 rounded-full flex items-center gap-2">
                     <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
-                    <span className="text-sm font-medium">Mengambil Foto...</span>
+                    <span className="text-sm font-medium">Mengambil 50 Foto...</span>
+                  </div>
+                )}
+                {/* Verifying Indicator */}
+                {isVerifying && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/70">
+                    <div className="text-center">
+                      <RefreshCw className="h-12 w-12 text-white animate-spin mx-auto mb-2" />
+                      <p className="text-white font-medium">Memverifikasi wajah...</p>
+                    </div>
                   </div>
                 )}
                 {/* Processing Indicator */}
@@ -347,13 +405,33 @@ const FaceRegistrationPage = () => {
                   <div className="absolute inset-0 flex items-center justify-center bg-black/70">
                     <div className="text-center">
                       <RefreshCw className="h-12 w-12 text-white animate-spin mx-auto mb-2" />
-                      <p className="text-white font-medium">Memproses wajah Anda...</p>
+                      <p className="text-white font-medium">Menyimpan data wajah...</p>
                     </div>
                   </div>
                 )}
                 {/* Hidden canvas for capture */}
                 <canvas ref={canvasRef} className="hidden" />
               </div>
+              
+              {/* Verification Button - Show only if not verified and not capturing */}
+              {!faceVerified && !isVerifying && !isCapturing && !isProcessing && (
+                <div className="space-y-3">
+                  <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                    <p className="text-sm text-blue-700 text-center">
+                      <strong>Langkah 1:</strong> Posisikan wajah Anda di tengah kamera, lalu klik tombol di bawah untuk verifikasi wajah.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={verifyFace}
+                    className="w-full"
+                    size="lg"
+                  >
+                    <Camera className="h-5 w-5 mr-2" />
+                    Ambil Foto Verifikasi
+                  </Button>
+                </div>
+              )}
+              
               {/* Progress Info */}
               {isCapturing && (
                 <div className="bg-blue-50 border border-blue-200 rounded-md p-3 text-center">

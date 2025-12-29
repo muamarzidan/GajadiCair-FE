@@ -54,7 +54,6 @@ export const router = createBrowserRouter([
       },
     ],
   },
-  // Shortcut routes
   {
     path: "/login",
     element: <AuthLayout />,
@@ -75,7 +74,6 @@ export const router = createBrowserRouter([
       },
     ],
   },
-  // Protected Dashboard Routes
   {
     path: "/dashboard",
     element: (
