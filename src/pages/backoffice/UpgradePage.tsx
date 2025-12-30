@@ -75,13 +75,15 @@ const UpgradePage = () => {
   const handleMidtransCallback = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const transactionStatus = urlParams.get('transaction_status');
+    const statusCode = urlParams.get('status_code');
     const orderId = urlParams.get('order_id');
     
-    if (transactionStatus && orderId) {
+    // Check if this is a redirect from payment
+    if (orderId) {
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
       
-      // Show appropriate dialog based on transaction status
+      // Handle based on transaction_status or fallback to status_code
       if (transactionStatus === 'settlement' || transactionStatus === 'capture') {
         setDialogConfig({
           title: 'Pembayaran Berhasil!',
@@ -102,6 +104,27 @@ const UpgradePage = () => {
           title: 'Pembayaran Gagal',
           description: 'Pembayaran tidak dapat diproses. Silakan coba lagi.',
           type: 'error'
+        });
+        setDialogOpen(true);
+      } else if (statusCode === '200' || transactionStatus === 'Q') {
+        // Fallback: If backend sends status_code=200 or transaction_status=Q, treat as success
+        // TODO: Backend should send proper transaction_status (settlement/capture)
+        console.warn('Received non-standard transaction status:', transactionStatus || statusCode);
+        setDialogConfig({
+          title: 'Pembayaran Berhasil!',
+          description: 'Pembayaran Anda telah berhasil diproses. Halaman akan dimuat ulang.',
+          type: 'success',
+          onConfirm: () => window.location.reload()
+        });
+        setDialogOpen(true);
+      } else {
+        // Unknown status
+        console.error('Unknown transaction status:', transactionStatus, 'status_code:', statusCode);
+        setDialogConfig({
+          title: 'Status Pembayaran Tidak Diketahui',
+          description: `Status: ${transactionStatus || statusCode}. Silakan cek riwayat subscription Anda.`,
+          type: 'warning',
+          onConfirm: () => window.location.reload()
         });
         setDialogOpen(true);
       }
@@ -206,10 +229,17 @@ const UpgradePage = () => {
         finish_redirect_url: window.location.origin + window.location.pathname
       });
 
-      if (response.statusCode === 201 && response.data.token) {
-        // Open Midtrans Snap - will redirect to finish_redirect_url after payment
-        // Don't use callbacks as they won't be called when using finish_redirect_url
-        openMidtransSnap(response.data.token);
+      if (response.statusCode === 201) {
+        // Backend already set the correct finish URL in redirect_url
+        // Just redirect to it directly instead of using snap.pay()
+        if (response.data.redirect_url) {
+          window.location.href = response.data.redirect_url;
+        } else if (response.data.token) {
+          // Fallback: use token if redirect_url not available
+          openMidtransSnap(response.data.token);
+        } else {
+          throw new Error('No redirect_url or token in response');
+        }
       } else {
         throw new Error(response.message || 'Failed to create subscription');
       }

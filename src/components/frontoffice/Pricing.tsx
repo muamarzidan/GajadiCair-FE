@@ -42,7 +42,7 @@ const pricingTiers = [
       { text: "Karyawan Tidak Terbatas", included: true },
       { text: "Absensi Validasi Lanjut", included: true },
       { text: "Potongan Gaji Otomatis", included: true },
-      { text: "Export Laporan Absensi", included: true },
+      // { text: "Export Laporan Absensi", included: true },
       // { text: "Fitur Lembur (3x Validasi)", included: true },
       { text: "Dukungan Prioritas 24/7", included: true },
     ],
