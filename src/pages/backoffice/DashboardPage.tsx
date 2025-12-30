@@ -289,7 +289,7 @@ function CompanyDashboardContent({ user }: { user: { name?: string } }) {
           <CardHeader>
             <CardTitle>Attendance Trends</CardTitle>
             <CardDescription>
-              Statistik kehadiran karyawan dalam {chartData?.range.days || 0} hari terakhir
+              Employee attendance statistics over the last {chartData?.range.days || 0} days
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -317,14 +317,10 @@ function CompanyDashboardContent({ user }: { user: { name?: string } }) {
             )}
           </CardContent>
         </Card>
-
         {/* Attendance Log Table */}
         <Card>
           <CardHeader>
             <CardTitle>Recent Attendance Logs</CardTitle>
-            <CardDescription>
-              Aktivitas check-in dan check-out terbaru dari karyawan
-            </CardDescription>
           </CardHeader>
           <CardContent>
             {isLoadingDashboard ? (
