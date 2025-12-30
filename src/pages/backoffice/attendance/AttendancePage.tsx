@@ -55,6 +55,8 @@ const AttendancePage = () => {
   const [checkType, setCheckType] = useState<'in' | 'out'>('in');
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [geoError, setGeoError] = useState<string>('');
+  const [isCountingDown, setIsCountingDown] = useState(false);
+  const [countdown, setCountdown] = useState(3);
   const [checkInEligibility, setCheckInEligibility] = useState<CheckInEligibility | null>(null);
   const [checkOutEligibility, setCheckOutEligibility] = useState<CheckOutEligibility | null>(null);
   
@@ -285,6 +287,25 @@ const AttendancePage = () => {
     setError('');
 
     try {
+      // Check if we need countdown (Level 2 with 2 gestures)
+      let needsCountdown = false;
+      if (gestureEnabled && levelPlan === 2) {
+        const validSelections = gestureSelections.filter(s => s.gesture && s.hand);
+        if (validSelections.length === 2) {
+          needsCountdown = true;
+        }
+      }
+
+      // If countdown needed, run it first
+      if (needsCountdown) {
+        setIsCountingDown(true);
+        for (let i = 3; i > 0; i--) {
+          setCountdown(i);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        setIsCountingDown(false);
+      }
+
       const video = videoRef.current;
       const canvas = canvasRef.current;
       const context = canvas.getContext('2d');
@@ -396,6 +417,8 @@ const AttendancePage = () => {
       setStream(null);
     }
     setShowCamera(false);
+    setIsCountingDown(false);
+    setCountdown(3);
     // Reset gesture selections when closing camera
     setGestureSelections([{ gesture: '', hand: 'Left' }]);
   };
@@ -596,6 +619,16 @@ const AttendancePage = () => {
                     muted
                     className="w-full h-full object-cover"
                   />
+                  
+                  {/* Countdown Overlay */}
+                  {isCountingDown && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                      <div className="text-white text-9xl font-bold animate-pulse">
+                        {countdown}
+                      </div>
+                    </div>
+                  )}
+                  
                   <canvas ref={canvasRef} className="hidden" />
                 </div>
 
@@ -708,19 +741,22 @@ const AttendancePage = () => {
                 <div className="flex gap-3">
                   <Button
                     onClick={captureAndSubmit}
-                    disabled={loading || !coords}
+                    disabled={loading || !coords || isCountingDown}
                     className="flex-1"
                     size="lg"
                   >
                     {loading ? (
                       <>
                         <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
-                        Memproses...
+                        {isCountingDown ? 'Bersiap...' : 'Memproses...'}
                       </>
                     ) : (
                       <>
                         <Check className="h-5 w-5 mr-2" />
                         Submit {checkType === 'in' ? 'Check In' : 'Check Out'}
+                        {gestureEnabled && levelPlan === 2 && gestureSelections.filter(s => s.gesture && s.hand).length === 2 && (
+                          <span className="ml-1 text-xs">(Countdown 3s)</span>
+                        )}
                       </>
                     )}
                   </Button>

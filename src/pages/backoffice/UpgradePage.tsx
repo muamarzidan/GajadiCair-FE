@@ -207,34 +207,9 @@ const UpgradePage = () => {
       });
 
       if (response.statusCode === 201 && response.data.token) {
-        // Prepare snap options with finish redirect URL
-        const snapOptions = {
-          onSuccess: () => {
-            setIsProcessing(false);
-            setProcessingPlan(null);
-            // Dialog akan ditampilkan dari handleMidtransCallback setelah redirect
-          },
-          onPending: () => {
-            setIsProcessing(false);
-            setProcessingPlan(null);
-          },
-          onError: () => {
-            setIsProcessing(false);
-            setProcessingPlan(null);
-            setDialogConfig({
-              title: 'Pembayaran Gagal',
-              description: 'Pembayaran gagal. Silakan coba lagi.',
-              type: 'error'
-            });
-            setDialogOpen(true);
-          },
-          onClose: () => {
-            setIsProcessing(false);
-            setProcessingPlan(null);
-          },
-        };
-        
-        openMidtransSnap(response.data.token, snapOptions);
+        // Open Midtrans Snap - will redirect to finish_redirect_url after payment
+        // Don't use callbacks as they won't be called when using finish_redirect_url
+        openMidtransSnap(response.data.token);
       } else {
         throw new Error(response.message || 'Failed to create subscription');
       }
